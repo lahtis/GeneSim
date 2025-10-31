@@ -40,7 +40,7 @@ typedef struct {
 void load_names(const char *filename, NameList *list) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        perror("File opening failed");
+        perror("File opening failed!");
         list->count = 0; // Tärkeää, jos tiedostoa ei löydy
         list->names = NULL;
         return; // Palataan virheen sattuessa
@@ -87,7 +87,7 @@ void free_names(NameList *list) {
 // Funktio valitsee ja palauttaa satunnaisen nimen NameList-rakenteesta
 const char* select_random_name(const NameList *list) {
     if (list->count == 0) {
-        return "NimiListTyhjä"; // Palautetaan tyhjä merkkijono, jos lista on tyhjä
+        return "Name list is empty."; // Palautetaan tyhjä merkkijono, jos lista on tyhjä
     }
     // Satunnainen indeksi välillä 0 - count-1
     int index = rand() % list->count;
