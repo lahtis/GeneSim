@@ -40,7 +40,7 @@ typedef struct {
 void load_names(const char *filename, NameList *list) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        perror("Tiedoston avaaminen epäonnistui");
+        perror("File opening failed");
         list->count = 0; // Tärkeää, jos tiedostoa ei löydy
         list->names = NULL;
         return; // Palataan virheen sattuessa
@@ -49,7 +49,7 @@ void load_names(const char *filename, NameList *list) {
     list->count = 0;
     list->names = NULL;
     char buffer[MAX_NAME_LENGTH];
-    
+
     // Luetaan nimi kerrallaan tiedostosta
     while (fgets(buffer, MAX_NAME_LENGTH, file) != NULL) {
         // Poista rivinvaihto, jos sellainen on (viimeinen merkki)
@@ -58,22 +58,22 @@ void load_names(const char *filename, NameList *list) {
         // 1. Kasvata taulukon kokoa yhdellä (realloc)
         list->names = (char **)realloc(list->names, (list->count + 1) * sizeof(char *));
         if (list->names == NULL) {
-            perror("Muistin varaus epäonnistui (realloc)");
+            perror("Memory allocation failed (realloc)");
             exit(EXIT_FAILURE);
         }
 
         // 2. Varaa muisti luetulle nimelle (strdup luo kopion)
         list->names[list->count] = strdup(buffer);
         if (list->names[list->count] == NULL) {
-            perror("Muistin varaus epäonnistui (strdup)");
+            perror("Memory allocation failed (strdup)");
             exit(EXIT_FAILURE);
         }
-        
+
         list->count++;
     }
 
     fclose(file);
-    printf("Ladattu %d nimeä tiedostosta: %s\n", list->count, filename);
+    printf("Loaded %d name from the file: %s\n", list->count, filename);
 }
 
 // Funktio vapauttaa NameList-rakenteen varaaman muistin
@@ -104,23 +104,23 @@ int main() {
     load_names("firstnames.txt", &first_names);   // ETUNIMILISTA
     load_names("middlenames.txt", &middle_names); // KESKINIMILISTA
     load_names("surnames.txt", &last_names);      // SUKUNIMILISTA
-    
+
     // Voit lisätä uusia listoja (esim. middle_names) helposti tässä:
     // NameList middle_names;
     // load_names("middlenames.txt", &middle_names);
 
-    printf("\n--- Satunnaisesti luotuja nimiä (Keskinimi 50%% todennäköisyydellä) ---\n");
-    
-    // 2. Generoidaan ja tulostetaan 10 satunnaista nimeä
-    for (int i = 0; i < 10; i++) {
+    printf("\n--- Randomly generated names (Middle name with 50%% probability) ---\n");
+
+    // 2. Generoidaan ja tulostetaan 5 satunnaista nimeä
+    for (int i = 0; i < 5; i++) {
         const char *first = select_random_name(&first_names);
         const char *last = select_random_name(&last_names);
-      
+
         // **KESKINIMEN EHDOTON VALINTA**
         const char *middle = ""; // Oletus: ei keskinimeä
 
         // rand() % 2 antaa arvon 0 tai 1. Jos arvo on 1, otetaan keskinimi.
-        if (rand() % 2 == 1 && middle_names.count > 0) { 
+        if (rand() % 2 == 1 && middle_names.count > 0) {
             middle = select_random_name(&middle_names);
         }
 
@@ -130,7 +130,7 @@ int main() {
             printf("%d: %s %s %s\n", i + 1, first, middle, last);
         } else {
             printf("%d: %s %s\n", i + 1, first, last);
-        }             
+        }
     }
 
     // 3. Vapautetaan kaikki dynaamisesti varattu muisti
