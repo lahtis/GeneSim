@@ -101,9 +101,9 @@ int main() {
     NameList first_names, last_names, middle_names;
 
     // 1. Lataa nimet tiedostoista
-    load_names("firstnames.txt", &first_names);   // ETUNIMILISTA
-    load_names("middlenames.txt", &middle_names); // KESKINIMILISTA
-    load_names("surnames.txt", &last_names);      // SUKUNIMILISTA
+    load_names("data/FI-fi/firstnames.txt", &first_names);   // ETUNIMILISTA
+    load_names("data/FI-fi/middlenames.txt", &middle_names); // KESKINIMILISTA
+    load_names("data/FI-fi/surnames.txt", &last_names);      // SUKUNIMILISTA
 
     // Voit lisätä uusia listoja (esim. middle_names) helposti tässä:
     // NameList middle_names;
