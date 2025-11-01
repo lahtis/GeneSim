@@ -27,45 +27,44 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #include <string.h>
 #include <time.h>
 
-// Maksimipituus yhdelle nimelle (voi kasvattaa tarvittaessa)
+// Maksimipituus yhdelle nimelle ja riville
+#define MAX_LINE_LENGTH 256
 #define MAX_NAME_LENGTH 100
 
 // Rakenne nimilistan tietojen tallentamiseen
 typedef struct {
-    char **names; // Osoitin taulukkoon, jossa merkkijonot (nimet) ovat
-    int count;    // Nimien lukumäärä listassa
+    char **names;
+    int count;
 } NameList;
 
-// Funktio lukee nimet tiedostosta dynaamisesti NameList-rakenteeseen
-void load_names(const char *filename, NameList *list) {
+// --- 1. TIEDOSTON LATAUSFUNKTIOT ---
+
+// Funktio lataa nimet tavallisesta tiedostosta (yksi nimi per rivi)
+void load_names_simple(const char *filename, NameList *list) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        perror("File opening failed!");
-        list->count = 0; // Tärkeää, jos tiedostoa ei löydy
+        fprintf(stderr, "WARNING: Could not open file: %s\n", filename);
+        list->count = 0;
         list->names = NULL;
-        return; // Palataan virheen sattuessa
+        return;
     }
 
     list->count = 0;
     list->names = NULL;
-    char buffer[MAX_NAME_LENGTH];
+    char buffer[MAX_LINE_LENGTH];
 
-    // Luetaan nimi kerrallaan tiedostosta
-    while (fgets(buffer, MAX_NAME_LENGTH, file) != NULL) {
-        // Poista rivinvaihto, jos sellainen on (viimeinen merkki)
-        buffer[strcspn(buffer, "\n")] = 0;
+    while (fgets(buffer, MAX_LINE_LENGTH, file) != NULL) {
+        buffer[strcspn(buffer, "\n")] = 0; // Poista rivinvaihto
 
-        // 1. Kasvata taulukon kokoa yhdellä (realloc)
         list->names = (char **)realloc(list->names, (list->count + 1) * sizeof(char *));
         if (list->names == NULL) {
-            perror("Memory allocation failed (realloc)");
+            perror("Memory allocation failed (simple realloc)");
             exit(EXIT_FAILURE);
         }
 
-        // 2. Varaa muisti luetulle nimelle (strdup luo kopion)
         list->names[list->count] = strdup(buffer);
         if (list->names[list->count] == NULL) {
-            perror("Memory allocation failed (strdup)");
+            perror("Memory allocation failed (simple strdup)");
             exit(EXIT_FAILURE);
         }
 
@@ -73,59 +72,123 @@ void load_names(const char *filename, NameList *list) {
     }
 
     fclose(file);
-    printf("Loaded %d name from the file: %s\n", list->count, filename);
+    printf("Loaded %d name of the file: %s\n", list->count, filename);
 }
+
+
+// Funktio lataa nimet CSV-tiedostosta (ottaa vain ensimmäisen sarakkeen)
+void load_names_from_csv(const char *filename, NameList *list) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "WARNING: Unable to open CSV-file: %s\n", filename);
+        list->count = 0;
+        list->names = NULL;
+        return;
+    }
+
+    list->count = 0;
+    list->names = NULL;
+    char buffer[MAX_LINE_LENGTH];
+
+    // OHITA ENSIMMÄINEN OTSIKKORIVI
+    if (fgets(buffer, MAX_LINE_LENGTH, file) == NULL) {
+        fclose(file);
+        return;
+    }
+
+    // Luetaan rivi kerrallaan
+    while (fgets(buffer, MAX_LINE_LENGTH, file) != NULL) {
+        char temp_buffer[MAX_LINE_LENGTH];
+        strcpy(temp_buffer, buffer); // Kopioidaan rivi, koska strtok muuttaa alkuperäistä
+
+        // Poista rivinvaihto kopioidusta
+        temp_buffer[strcspn(temp_buffer, "\n")] = 0;
+
+        // Käytetään strtok-funktiota erottamaan merkkijono pilkun (',') kohdalta
+        char *name_token = strtok(temp_buffer, ",");
+
+        if (name_token != NULL) {
+            // Varmistus: Tyhjien nimien ohitus (tapahtuu usein virheellisissä CSV-riveissä)
+            if (strlen(name_token) > 0) {
+
+                // Kasvatetaan muistia
+                list->names = (char **)realloc(list->names, (list->count + 1) * sizeof(char *));
+                if (list->names == NULL) {
+                    perror("Memory allocation failed (csv realloc)");
+                    exit(EXIT_FAILURE);
+                }
+
+                // Tallennetaan nimi
+                list->names[list->count] = strdup(name_token);
+                if (list->names[list->count] == NULL) {
+                    perror("Memory allocation failed (csv strdup)");
+                    exit(EXIT_FAILURE);
+                }
+
+                list->count++;
+            }
+        }
+    }
+
+    fclose(file);
+    printf("Loaded %d name from CSV-file: %s\n", list->count, filename);
+}
+
+// --- 2. APUFUNKTIOT ---
 
 // Funktio vapauttaa NameList-rakenteen varaaman muistin
 void free_names(NameList *list) {
-    for (int i = 0; i < list->count; i++) {
-        free(list->names[i]); // Vapautetaan kunkin nimen muisti
+    if (list->names != NULL) {
+        for (int i = 0; i < list->count; i++) {
+            free(list->names[i]);
+        }
+        free(list->names);
     }
-    free(list->names); // Vapautetaan osoitintaulukon muisti
 }
 
 // Funktio valitsee ja palauttaa satunnaisen nimen NameList-rakenteesta
 const char* select_random_name(const NameList *list) {
     if (list->count == 0) {
-        return "Name list is empty."; // Palautetaan tyhjä merkkijono, jos lista on tyhjä
+        return "";
     }
-    // Satunnainen indeksi välillä 0 - count-1
     int index = rand() % list->count;
     return list->names[index];
 }
 
+// --- 3. PÄÄOHJELMA ---
+
 int main() {
-    // Asetetaan satunnaislukugeneraattorin siemen (tärkeää!)
+    // Asetetaan satunnaislukugeneraattorin siemen
     srand(time(NULL));
 
-    NameList first_names, last_names, middle_names;
+    NameList first_names, middle_names, last_names;
 
-    // 1. Lataa nimet tiedostoista
-    load_names("data/FI-fi/firstnames.txt", &first_names);   // ETUNIMILISTA
-    load_names("data/FI-fi/middlenames.txt", &middle_names); // KESKINIMILISTA
-    load_names("data/FI-fi/surnames.txt", &last_names);      // SUKUNIMILISTA
+    // 1. Ladataan nimet listoihin (Muista muuttaa tiedostonimet vastaamaan omia tiedostojasi!)
 
-    // Voit lisätä uusia listoja (esim. middle_names) helposti tässä:
-    // NameList middle_names;
-    // load_names("middlenames.txt", &middle_names);
+    // Esimerkki CSV-latauksesta (ensimmäiset nimet):
+    load_names_from_csv("data/FI-fi/Finnish-men-firts-names.csv", &first_names);
+    load_names_from_csv("data/FI-fi/Finnish-men-seconds-names.csv", &middle_names);
+    load_names_from_csv("data/FI-fi/Finnish-men-last-names.csv", &last_names);
+
+    // Esimerkki simple-latauksesta (keskinimet ja sukunimet, olettaen että ne ovat omissa tiedostoissaan)
+    // load_names_simple("data/FI-fi/firstnames.txt", &first_names);
+    // load_names_simple("data/FI-fi/middlenames.txt", &middle_names);
+    // load_names_simple("data/FI-fi/surnames.txt", &last_names);
 
     printf("\n--- Randomly generated names (Middle name with 50%% probability) ---\n");
 
-    // 2. Generoidaan ja tulostetaan 5 satunnaista nimeä
-    for (int i = 0; i < 5; i++) {
+    // 2. Generoidaan ja tulostetaan 1 satunnaista nimeä
+    for (int i = 0; i < 1; i++) {
         const char *first = select_random_name(&first_names);
         const char *last = select_random_name(&last_names);
+        const char *middle = "";
 
-        // **KESKINIMEN EHDOTON VALINTA**
-        const char *middle = ""; // Oletus: ei keskinimeä
-
-        // rand() % 2 antaa arvon 0 tai 1. Jos arvo on 1, otetaan keskinimi.
+        // Ehto keskinimen valinnalle (50 % todennäköisyys ja lista ei saa olla tyhjä)
         if (rand() % 2 == 1 && middle_names.count > 0) {
             middle = select_random_name(&middle_names);
         }
 
-        // Tulostus: Tässä käytetään ehdollista muotoilua.
-        // Jos 'middle' on tyhjä (""), tulostuu vain etunimi ja sukunimi.
+        // Tulostus: Jos middle on tyhjä, tulostetaan vain kaksi nimeä.
         if (strlen(middle) > 0) {
             printf("%d: %s %s %s\n", i + 1, first, middle, last);
         } else {
@@ -135,7 +198,7 @@ int main() {
 
     // 3. Vapautetaan kaikki dynaamisesti varattu muisti
     free_names(&first_names);
-    free_names(&middle_names); // Vapautetaan myös uusi lista
+    free_names(&middle_names);
     free_names(&last_names);
 
     return 0;
