@@ -1,7 +1,8 @@
 # GeneSim
-genesim - A comprehensive lineage and family relationship simulator.
+genesim - A comprehensive lineage and family relationship simulator. (under development)
+namegen- A simple name simulator that reads first name, middle name, and last name from CVS files. And prints 10 names to the screen. It can choose the middle name with a 50% probability.
 
-under development
+
 
 Let's try to study if this reflections can ever be done.
 
