@@ -1,20 +1,20 @@
 # GeneSim
-* genesim - A comprehensive kinship and family relationship simulator. (in development)
-* namegen - A simple name simulator that reads first name, middle name and last name from CVS files. And prints 1 or 10 names to the screen. It can choose the second name with a 50% probability.
-
 The purpose of this program is to facilitate the development of story-based game designs.
+* genesim - A comprehensive kinship and family relationship simulator. (in development)
+* namegen - A simple commandline name simulator that reads first name, middle name and last name from histori CVS files. And prints 1 or 10 names to the screen. It can choose the second name with a 50% probability.
 
-namegen - is ready to randomize names. 
-It contains:
-* Most common male first names in 1860-1969 in Finland.
-* Most common male middle names in 1860-1969 in Finland.
+<h1>Namegen – Historical Name Generator</h1>
+Namegen is a command-line based application designed to generate authentic Finnish names from specific historical periods.
 
-Task list
-* You can choose the settings for the generator you use.
-* Most common female first names in 1860-1969 in Finland.
-* Most common female middle names in 1860-1969 in Finland.
+<h2>Key Features</h2>
+<li>Historical Dataset: Reads first, middle and last names from multiple CSV files, sorted by decade.</li>
+<li>Period Selection: Support for command-line parameters (-p <number>) allows name generation from a selected historical period automatically.</li>
+<li>Randomized Structure: Middle name usage is randomized (50% probability), creating realistic variation in names.</li>
+<li>Flexible Output: Generates one (1) name at a time by default, but supports expansion to ten (10) names (future feature).</li>
+<li>CLI Standards: Includes support for standard command line parameters such as -v (verbose), -h (help), and -V (version), ensuring ease of use.</li>
 
-
- 
-
-Data is based https://www.tuomas.salste.net/suku/kela-etunimet.html#M1 research. There are a lot of ready-made names. The purpose of this is to initially generate one or more names for use by the program. The lists grow over the years, so the solution needs to be developed. 
+<h2>Technical Specifications</h2>
+<li>Language: Pure C.</li>
+<li>Compatibility: Designed to work on both Windows and Linux environments (using #ifdef constructs).</li>
+<li>Version: 0.1.0 (Development stage).</li>
+<li>Data is based on https://www.tuomas.salste.net/suku/kela-etunimet.html#M1 research. There are a lot of ready-made names.</li>
