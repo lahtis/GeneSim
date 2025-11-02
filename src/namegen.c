@@ -442,8 +442,8 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             // Apua lippu
             printf("Use: %s [-v] [-p <Number>] [-g <male/female>]\n", argv[0]);
-            printf("  -p <number>, --period <number>    Automatically generate a name based on the given season (.(1-%d).\n", first_names.num_decades);
-            printf("  -g <sukupuoli>, --gender <male/female>  Selects the gender (male/female) of the name generated.\n");
+            printf("  -p <number>, --period <number>    Automatically generate a name based on the given season (1-%d).\n", first_names.num_decades);
+            printf("  -g <gender>, --gender <male/female>  Selects the gender (male/female) or (M/F) of the name generated.\n");
             printf("  -v, --verbose    Show more information about the debug.\n");
             printf("  -h, --help    Displays help and ends the program.\n");
             printf("  -V, --version    Displays the version number and exits.\n");
