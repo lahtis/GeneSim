@@ -22,13 +22,24 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
+// Versio: MAJOR.MINOR.PATCH
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 1
+#define VERSION_PATCH 0
+
+// Luodaan versionumerosta merkkijono tulostusta varten
+#define VERSION_STRING "0.1.0"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <locale.h>
 #include <ctype.h> // Käytetään isspace:n kanssa trimmaamiseen
-#include <windows.h> // LISÄÄ TÄMÄ
+
+#ifdef _WIN32
+#include <windows.h> // Sisällytetään vain, kun käännetään Windowsille
+#endif
 
 // Maksimipituus yhdelle nimelle ja riville
 #define MAX_LINE_LENGTH 4096
@@ -81,7 +92,7 @@ void free_decade_data(DecadeData *data) {
 }
 
 // Ladataan nimet CSV-tiedostosta, jossa on useita sarakkeita (yksi sarake = yksi vuosikymmenlista)
-void load_names_multi_column(const char *filename, DecadeData *data) {
+void load_names_multi_column(const char *filename, DecadeData *data, int verbose) {
     // Alustus
     data->num_decades = 0;
     data->decades = NULL;
@@ -120,7 +131,9 @@ void load_names_multi_column(const char *filename, DecadeData *data) {
         data->num_decades++;
         token = strtok(NULL, ",");
     }
-    printf("Loaded %d headlines of the decade.\n", data->num_decades);
+    if (verbose) {
+        printf("Loaded %d headlines of the decade.\n", data->num_decades);
+    }
 
     // 2. Lue varsinaiset tiedot rivi kerrallaan
     while (fgets(buffer, MAX_LINE_LENGTH, file) != NULL) {
@@ -177,7 +190,7 @@ void free_names(NameList *list) {
 // --- 1. TIEDOSTON LATAUSFUNKTIOT ---
 
 // Funktio lataa nimet tavallisesta tiedostosta (yksi nimi per rivi)
-void load_names_simple(const char *filename, NameList *list) {
+void load_names_simple(const char *filename, NameList *list, int verbose) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         fprintf(stderr, "WARNING: Could not open file: %s\n", filename);
@@ -216,7 +229,9 @@ void load_names_simple(const char *filename, NameList *list) {
     }
 
     fclose(file);
-    printf("Loaded %d name from the file: %s\n", list->count, filename);
+    if (verbose) {
+        printf("Loaded %d name from the file: %s\n", list->count, filename);
+    }
 }
 
 
@@ -302,14 +317,29 @@ const char* select_random_name(const NameList *list) {
 
 // --- 3. PÄÄOHJELMA ---
 
-int main() {
-    SetConsoleOutputCP(CP_UTF8);  // merkistövirheen korjaus WIN11, poista tämä kun käännät Linuxille.
+int main(int argc, char *argv[]) {
+    // WINDOWS-KOHTAISET MERKISTÖKORJAUKSET
     // Asettaa ohjelman lokalisoinnin käyttämään UTF-8-merkistöä
     // Tämä yrittää korjata "1890ÔÇô99" -tyyppiset merkkivääristymät
-    setlocale(LC_ALL, "fi_FI.UTF-8");
+    // Nämä suoritetaan VAIN Windows-käännöksessä (_WIN32)
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(65001);
+#endif
+
+    // Lokalisointi toimii usein parhaiten tällä tavalla sekä Linuxissa että Windowsissa.
+    // Linuxissa "" asettaa sen järjestelmän UTF-8 oletukseen.
+    // Windowsissa "fi_FI.UTF-8" voi myös toimia.
+    setlocale(LC_ALL, ""); // Käytä järjestelmän oletuslokalisointia
+    // setlocale(LC_ALL, "fi_FI.UTF-8");
 
     // Asetetaan satunnaislukugeneraattorin siemen
     srand(time(NULL));
+
+    // UUDET MUUTTUJAT KÄYTTÄJÄN PARAMETREJA VARTEN
+    int verbose_flag = 0; // -v lipulle
+    int period_index = -1; // -p <numero> valinnalle (indeksi 0:sta alkaen)
+    int automatic_generation = 0; // Onko nimi generoitu komentoriviltä
 
     // KOLME ERI TIETORAKENNETTA
     DecadeData first_names = {NULL, NULL, 0};
@@ -321,12 +351,15 @@ int main() {
     const char *last_file_simple = "data/FI-fi/Finnish-men-last-names.csv";
 
     // 1. LADATAAN KAIKKI KOLME TIEDOSTOA HETI ALUSSA!
+    if (verbose_flag) {
     printf("--- Reading files ---\n");
-    load_names_multi_column(first_file, &first_names);
-    load_names_multi_column(middle_file, &middle_names);
-    // KORJAUS 1 & 2: Lataa sukunimet oikealla muuttujalla ja oikeassa kohdassa!
-    load_names_simple(last_file_simple, &last_names_simple);
+    }
+    load_names_multi_column(first_file, &first_names, verbose_flag);
+    load_names_multi_column(middle_file, &middle_names, verbose_flag);
+    load_names_simple(last_file_simple, &last_names_simple, verbose_flag);
+    if (verbose_flag) {
     printf("--------------------------\n");
+    }
 
     // 2. KRIITTINEN TARKISTUS: Poistu, jos pakolliset tiedostot puuttuvat
     if (first_names.num_decades == 0 || last_names_simple.count == 0) {
@@ -345,43 +378,112 @@ int main() {
         fprintf(stderr, "\nWARNING: Middle names file not loaded. The generator does not use middle names.\n");
     }
 
-    // A. KÄYTTÄJÄN ESITTELY JA KYSELY
-    print_available_decades(&first_names); // Kutsutaan vain kerran!
+    // 3. KÄSITTELE KOMENTORIVIPARAMETRIT
+    for (int i = 1; i < argc; i++) {
 
-    int valinta = 0;
-    int index = -1; // Käytettävä indeksi
+        // UUSI VERSIOLIPPU
+        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
+        printf("Program version: %s\n", VERSION_STRING); // Tulosta versio
+        // Vapauta muisti ennen poistumista
+        free_decade_data(&first_names);
+        free_decade_data(&middle_names);
+        free_names(&last_names_simple);
+        return 0; // Poistu ohjelmasta onnistuneesti
+    }
+        // VERBOSE LIPPU
+        if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+            verbose_flag = 1;
+            printf("Verbose mode activated.\n");
 
-    printf("Enter the period number for name generation (1-%d) or 0 to exit: ", first_names.num_decades);
-    if (scanf("%d", &valinta) != 1 || valinta < 0 || valinta > first_names.num_decades) {
-        printf("Incorrect choice.\n");
-        valinta = 0; // Jos virhe, poistu
+        } else if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--period") == 0) {
+            // Arvoa vaativa lippu: tarkista, onko seuraava argumentti numero
+            if (i + 1 < argc) {
+                int valinta = atoi(argv[i + 1]); // Muuta merkkijono numeroksi
+                if (valinta >= 1 && valinta <= first_names.num_decades) {
+                    period_index = valinta - 1; // Muunna 1-pohjainen indeksi 0-pohjaiseksi
+                    automatic_generation = 1; // Merkitään, että generointi tapahtuu automaattisesti
+                    i++; // Hyppää yli seuraavan argumentin (numeron), jotta sitä ei käsitellä lipuksi
+                } else {
+                    fprintf(stderr, "ERROR: Invalid season: %s. Choose 1-%d.\n",
+                            argv[i+1], first_names.num_decades);
+                    return 1; // Poistu virheen vuoksi
+                }
+            } else {
+                fprintf(stderr, "Error: Flag -p/--period requires season number.\n");
+                return 1;
+            }
+        } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            // Apua lippu
+            printf("Use: %s [-v] [-p <Number>]\n", argv[0]);
+            printf("  -v, --verbose    Show more information about the performance.\n");
+            printf("  -p <number>, --period <number>    Automatically generate a name based on the given season (.(1-%d).\n", first_names.num_decades);
+            printf("  -h, --help    Displays help and ends the program.\n");
+            printf("   --debug   Debug mode of program.\n");
+            printf("  -V, --version    Displays the version number and exits.\n");
+            printf("Without tickets, the program asks for the season interactively.\n");
+            // Vapauta muisti ennen poistumista
+            free_decade_data(&first_names);
+            free_decade_data(&middle_names);
+            free_names(&last_names_simple);
+            return 0;
+
+        } else {
+            fprintf(stderr, "ERROR: Unknown parameter: %s\n", argv[i]);
+            return 1; // Tuntematon lippu johtaa poistumiseen
+        }
     }
 
-    if (valinta > 0) {
-        index = valinta - 1; // Valittu lista, esim. 1 -> indeksi 0
+
+    // A. KÄYTTÄJÄN ESITTELY JA KYSELY
+
+    if (automatic_generation) {
+        // Jos parametri annettu, ohita interaktiivinen kysely
+        if (verbose_flag) {
+            printf("Use command line selection: %d (Season: %s)\n",
+                   period_index + 1, first_names.decades[period_index]);
+        }
+    } else {
+        // Interaktiivinen kysely
+        print_available_decades(&first_names); // Kutsutaan vain kerran!
+        int valinta = 0;
+
+        printf("Enter the period number for name generation (1-%d) or 0 to exit: ", first_names.num_decades);
+        if (scanf("%d", &valinta) != 1 || valinta < 0 || valinta > first_names.num_decades) {
+            printf("Incorrect choice.\n");
+            period_index = -1; // Jos virhe, merkitään virheelliseksi
+        } else if (valinta > 0) {
+            period_index = valinta - 1;
+        } else {
+            period_index = -1; // Poistu
+        }
+    }
+
+
+    if (period_index != -1) { // Käytetään nyt period_indexiä valinnan sijaan
 
         // TARKISTUS: Varmistetaan, että valitulla indeksillä on nimiä etunimilistassa
-        if (index < first_names.num_decades && first_names.lists[index].count > 0) {
+        if (period_index < first_names.num_decades && first_names.lists[period_index].count > 0) {
 
             // 1. Nimien valinta
-            const char *first = first_names.lists[index].names[rand() % first_names.lists[index].count];
+            // HUOM: Vaihdetaan 'index' -> 'period_index'
+            const char *first = first_names.lists[period_index].names[rand() % first_names.lists[period_index].count];
             const char *middle = "";
             const char *last = last_names_simple.names[rand() % last_names_simple.count];
 
             // 2. KESKINIMEN VALINTA (50% todennäköisyys)
-            if (index < middle_names.num_decades &&
-                middle_names.lists[index].count > 0 &&
+            if (period_index < middle_names.num_decades &&
+                middle_names.lists[period_index].count > 0 &&
                 rand() % 100 < 50) {
-                middle = middle_names.lists[index].names[rand() % middle_names.lists[index].count];
+                middle = middle_names.lists[period_index].names[rand() % middle_names.lists[period_index].count];
             }
 
-            // DEBUG-LOHKO: Tulostaa muuttujien arvot vain, jos DEBUG_MODE on 1
-#if DEBUG_MODE
-            fprintf(stderr, "DEBUG: First='%s', Middle='%s', Last='%s'\n", first, middle, last);
-#endif
+            // DEBUG-LOHKO: Nyt käyttää myös verbose_flagia!
+            if (verbose_flag) {
+                fprintf(stderr, "DEBUG: First='%s', Middle='%s', Last='%s'\n", first, middle, last);
+            }
 
             // 3. Tulostus
-            printf("\nGenerated name from the period '%s':\n", first_names.decades[index]);
+            printf("\nGenerated name from the period '%s':\n", first_names.decades[period_index]);
             if (strlen(middle) > 0) {
                 printf(">>> %s %s %s <<<\n\n", first, middle, last);
             } else {
@@ -389,9 +491,9 @@ int main() {
             }
 
         } else {
-            printf("\nVIRHE: There are not enough first names in the selected time period. (%s). \n", first_names.decades[index]);
+            printf("\nError: There are not enough first names in the selected time period. (%s). \n", first_names.decades[period_index]);
         }
-    } else {
+    } else if (!automatic_generation) {
         printf("Exiting the program.\n");
     }
 
