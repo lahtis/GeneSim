@@ -340,22 +340,29 @@ int main(int argc, char *argv[]) {
     int verbose_flag = 0; // -v lipulle
     int period_index = -1; // -p <numero> valinnalle (indeksi 0:sta alkaen)
     int automatic_generation = 0; // Onko nimi generoitu komentoriviltä
+    int gender_flag = 0;  // 0 = Male (oletus), 1 = Female
 
     // KOLME ERI TIETORAKENNETTA
     DecadeData first_names = {NULL, NULL, 0};
     DecadeData middle_names = {NULL, NULL, 0};
     NameList last_names_simple = {NULL, 0}; // Yksinkertainen lista sukunimille
+    DecadeData female_first_names = {NULL, NULL, 0};
+    DecadeData female_middle_names = {NULL, NULL, 0};
 
     const char *first_file = "data/FI-fi/Finnish-men-firts-names.csv";
     const char *middle_file = "data/FI-fi/Finnish-men-seconds-names.csv";
-    const char *last_file_simple = "data/FI-fi/Finnish-men-last-names.csv";
+    const char *female_first_file = "data/FI-fi/Finnish-women-first-names.csv";
+    const char *female_middle_file = "data/FI-fi/Finnish-women-middle-names.csv";
+    const char *last_file_simple = "data/FI-fi/Finnish-last-names.csv";
 
-    // 1. LADATAAN KAIKKI KOLME TIEDOSTOA HETI ALUSSA!
+    // 1. LADATAAN KAIKKI VIISI TIEDOSTOA HETI ALUSSA!
     if (verbose_flag) {
     printf("--- Reading files ---\n");
     }
     load_names_multi_column(first_file, &first_names, verbose_flag);
     load_names_multi_column(middle_file, &middle_names, verbose_flag);
+    load_names_multi_column(female_first_file, &female_first_names, verbose_flag);
+    load_names_multi_column(female_middle_file, &female_middle_names, verbose_flag);
     load_names_simple(last_file_simple, &last_names_simple, verbose_flag);
     if (verbose_flag) {
     printf("--------------------------\n");
@@ -366,7 +373,7 @@ int main(int argc, char *argv[]) {
 
         fprintf(stderr, "\nERROR: Required files are missing or empty.\n");
         fprintf(stderr, "Number of first name columns: %d, Number of last names: %d.\n",
-                        first_names.num_decades, last_names_simple.count);
+        first_names.num_decades, last_names_simple.count);
         free_decade_data(&first_names);
         free_decade_data(&middle_names);
         free_names(&last_names_simple);
@@ -381,7 +388,7 @@ int main(int argc, char *argv[]) {
     // 3. KÄSITTELE KOMENTORIVIPARAMETRIT
     for (int i = 1; i < argc; i++) {
 
-        // UUSI VERSIOLIPPU
+        // 1. VERSION TARKISTUS
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
         printf("Program version: %s\n", VERSION_STRING); // Tulosta versio
         // Vapauta muisti ennen poistumista
@@ -389,13 +396,32 @@ int main(int argc, char *argv[]) {
         free_decade_data(&middle_names);
         free_names(&last_names_simple);
         return 0; // Poistu ohjelmasta onnistuneesti
-    }
-        // VERBOSE LIPPU
-        if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+        }
+        // 2. VERBOSE LIPPU
+        else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
             verbose_flag = 1;
             printf("Verbose mode activated.\n");
-
-        } else if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--period") == 0) {
+        }
+        // 3. SUKUPUOLEN KÄSITTELYLOGIIKKA
+        else if (strcmp(argv[i], "-g") == 0 || strcmp(argv[i], "--gender") == 0) {
+            if (i + 1 < argc) {
+        // Vertaillaan seuraavaa argumenttia
+        if (strcmp(argv[i+1], "female") == 0 || strcmp(argv[i+1], "F") == 0) {
+            gender_flag = 1; // Naiset
+        } else if (strcmp(argv[i+1], "male") == 0 || strcmp(argv[i+1], "M") == 0) {
+            gender_flag = 0; // Miehet (oletus)
+        } else {
+            fprintf(stderr, "ERROR: Incorrect gender selection '%s'. Use 'male'/'M' or 'female'/'F' selector.\n", argv[i+1]);
+            return 1;
+        }
+        i++; // Hyppää yli sukupuoli-argumentin
+        } else {
+            fprintf(stderr, "ERROR: Flag -g/--gender requires an option (male/female).\n");
+            return 1;
+            }
+        }
+        // 4. PERIODIN KÄSITTELY
+        else if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--period") == 0) {
             // Arvoa vaativa lippu: tarkista, onko seuraava argumentti numero
             if (i + 1 < argc) {
                 int valinta = atoi(argv[i + 1]); // Muuta merkkijono numeroksi
@@ -412,13 +438,14 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "Error: Flag -p/--period requires season number.\n");
                 return 1;
             }
+          // 5. OHJE-LIPPU
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             // Apua lippu
-            printf("Use: %s [-v] [-p <Number>]\n", argv[0]);
-            printf("  -v, --verbose    Show more information about the performance.\n");
+            printf("Use: %s [-v] [-p <Number>] [-g <male/female>]\n", argv[0]);
             printf("  -p <number>, --period <number>    Automatically generate a name based on the given season (.(1-%d).\n", first_names.num_decades);
+            printf("  -g <sukupuoli>, --gender <male/female>  Selects the gender (male/female) of the name generated.\n");
+            printf("  -v, --verbose    Show more information about the debug.\n");
             printf("  -h, --help    Displays help and ends the program.\n");
-            printf("   --debug   Debug mode of program.\n");
             printf("  -V, --version    Displays the version number and exits.\n");
             printf("Without tickets, the program asks for the season interactively.\n");
             // Vapauta muisti ennen poistumista
@@ -427,7 +454,9 @@ int main(int argc, char *argv[]) {
             free_names(&last_names_simple);
             return 0;
 
-        } else {
+        }
+          // 6. TUNTEMATON PARAMETRI
+          else {
             fprintf(stderr, "ERROR: Unknown parameter: %s\n", argv[i]);
             return 1; // Tuntematon lippu johtaa poistumiseen
         }
@@ -459,22 +488,27 @@ int main(int argc, char *argv[]) {
     }
 
 
-    if (period_index != -1) { // Käytetään nyt period_indexiä valinnan sijaan
+    if (period_index != -1) {
 
-        // TARKISTUS: Varmistetaan, että valitulla indeksillä on nimiä etunimilistassa
-        if (period_index < first_names.num_decades && first_names.lists[period_index].count > 0) {
+        // MÄÄRITÄ MITÄ LISTOJA KÄYTETÄÄN
+        // Jos gender_flag on 0 (Male), käytetään miesten listoja.
+        // Jos gender_flag on 1 (Female), käytetään naisten listoja.
+        DecadeData *first_set = (gender_flag == 0) ? &first_names : &female_first_names;
+        DecadeData *middle_set = (gender_flag == 0) ? &middle_names : &female_middle_names;
 
-            // 1. Nimien valinta
-            // HUOM: Vaihdetaan 'index' -> 'period_index'
-            const char *first = first_names.lists[period_index].names[rand() % first_names.lists[period_index].count];
+        // TARKISTUS: Varmistetaan, että valitulla indeksillä on nimiä
+        if (period_index < first_set->num_decades && first_set->lists[period_index].count > 0) {
+
+            // 1. Nimien valinta (KÄYTÄ NYT *first_set:iä ja *middle_set:iä)
+            const char *first = first_set->lists[period_index].names[rand() % first_set->lists[period_index].count];
             const char *middle = "";
             const char *last = last_names_simple.names[rand() % last_names_simple.count];
 
             // 2. KESKINIMEN VALINTA (50% todennäköisyys)
-            if (period_index < middle_names.num_decades &&
-                middle_names.lists[period_index].count > 0 &&
+            if (period_index < middle_set->num_decades &&
+                middle_set->lists[period_index].count > 0 &&
                 rand() % 100 < 50) {
-                middle = middle_names.lists[period_index].names[rand() % middle_names.lists[period_index].count];
+                middle = middle_set->lists[period_index].names[rand() % middle_set->lists[period_index].count];
             }
 
             // DEBUG-LOHKO: Nyt käyttää myös verbose_flagia!
