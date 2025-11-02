@@ -1,13 +1,13 @@
 # GeneSim
 The purpose of this program is to facilitate the development of story-based game designs.
 * genesim - A comprehensive kinship and family relationship simulator. (in development)
-* namegen - A simple commandline name simulator that reads first name, middle name and last name from historical CVS files. And prints 1 or 10 names to the screen. It can choose the second name with a 50% probability.
+* namegen - A simple commandline name simulator that reads first-, middle-, and lastname from historical Finnish CSV-files. And prints 1 name to the screen. It can choose the second name with a 50% probability.
 
 <h1>Namegen – Historical Name Generator</h1>
 Namegen is a command-line based application designed to generate authentic Finnish names from specific historical periods.
 
 <h2>Key Features</h2>
-<li>Historical Dataset: Reads first, middle and last names from multiple CSV files, sorted by decade.</li>
+<li>Historical Dataset: Reads first, middle and last names from multiple CSV-files, sorted by decade.</li>
 <li>Period Selection: Support for command-line parameters (-p <number>) allows name generation from a selected historical period automatically.</li>
 <li>Randomized Structure: Middle name usage is randomized (50% probability), creating realistic variation in names.</li>
 <li>Flexible Output: Generates one (1) name at a time by default, but supports expansion to ten (10) names (future feature).</li>
