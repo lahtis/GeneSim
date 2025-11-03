@@ -1,2 +1,2 @@
-English and Finnish Documenntation.
+English and Finnish Documentation.
 
