@@ -25,10 +25,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 // Versio: MAJOR.MINOR.PATCH
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 2
-#define VERSION_PATCH 0 // Versio 0.2.0: Lis‰tty usean keskinimen tuki ja datan validointi
+#define VERSION_PATCH 1 // Versio 0.2.1: Interaktiivinen tuki parigeneroinnille ja Help-tekstin siistiminen
 
 // Luodaan versionumerosta merkkijono tulostusta varten
-#define VERSION_STRING "0.2.0"
+#define VERSION_STRING "0.2.1"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,18 +84,17 @@ void print_error(const char *message) {
     fprintf(stderr, "ERROR: %s\n", message);
 }
 
-// UUSI: Tarkistaa, sis‰lt‰‰kˆ merkkijono vain aakkosellisia merkkej‰, v‰lilyˆntej‰ ja v‰liviivoja.
+// Tarkistaa, sis‰lt‰‰kˆ merkkijono vain aakkosellisia merkkej‰, v‰lilyˆntej‰ ja v‰liviivoja.
 int is_valid_name(const char *name) {
     if (name == NULL || *name == '\0') {
-        return 0; // Tyhj‰ merkkijono ei ole kelvollinen nimi
+        return 0;
     }
     for (int i = 0; name[i] != '\0'; i++) {
-        // Sallitaan aakkoset, v‰lilyˆnnit ja v‰liviiva. Muut merkit (kuten numerot) hyl‰t‰‰n.
         if (!isalpha((unsigned char)name[i]) && name[i] != ' ' && name[i] != '-') {
-            return 0; // Ep‰kelpo merkki lˆytyi
+            return 0;
         }
     }
-    return 1; // Kelvollinen
+    return 1;
 }
 
 
@@ -183,7 +182,6 @@ void load_names_multi_column(const char *filename, DecadeData *data, int verbose
                 current_list->count++;
             }
             else if (strlen(clean_name) > 0 && verbose) {
-                // Tulosta varoitus ep‰kelvosta datasta (esim. Kauko 1870-29 tapauksessa)
                 fprintf(stderr, "WARNING: Skipped invalid name candidate '%s' during load.\n", clean_name);
             }
 
@@ -365,7 +363,7 @@ int main(int argc, char *argv[]) {
     int generate_last_name = 1;
     char *override_last_name = NULL;
     int max_middle_names = 1;
-    int couple_mode = 0; // UUSI: Parigenerointi
+    int couple_mode = 0;
 
     // TIEDOSTOPOLUT
     const char *first_file = "data/FI-fi/Finnish-men-firts-names.csv";
@@ -491,11 +489,10 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // UUSI: Parigenerointi
+        // Parigenerointi
         else if (strcmp(argv[i], "-P") == 0 || strcmp(argv[i], "--couple") == 0) {
             couple_mode = 1;
             generate_last_name = 1; // Pakota sukunimen generointi paritilassa
-            // Ohita -g lippu paritilassa
         }
 
         else if (strcmp(argv[i], "-L") == 0 || strcmp(argv[i], "--no-last-name") == 0) {
@@ -524,13 +521,11 @@ int main(int argc, char *argv[]) {
     if (verbose_flag) {
         printf("--- Reading files ---\n");
     }
-    // Ladataan kaikki nelj‰ listaa
     load_names_multi_column(first_file, &first_names, verbose_flag);
     load_names_multi_column(middle_file, &middle_names, verbose_flag);
     load_names_multi_column(female_first_file, &female_first_names, verbose_flag);
     load_names_multi_column(female_middle_file, &female_middle_names, verbose_flag);
 
-    // Sukunimilista ladataan vain, jos sit‰ tarvitaan
     if (generate_last_name && override_last_name == NULL) {
         load_names_simple(last_file_simple, &last_names_simple, verbose_flag);
     } else if (verbose_flag && override_last_name == NULL) {
@@ -568,13 +563,12 @@ int main(int argc, char *argv[]) {
         printf("  -n <count>, --count <count>† † Specifies the number of names (or couples if -P is used).\n");
         printf("  -m <chance>, --middle-chance <chance>† Middle name probability (0-100, default 50).\n");
         printf("  -M <max>, --max-middle-names <max>† Max number of middle names (1-3, default 1).\n");
-        printf("  -P, --couple† † Generates names for a couple (M+F). Surname is generated for M and copied to F.\n"); // UUSI
+        printf("  -P, --couple† † Generates names for a couple (M+F). Surname is generated for M and copied to F.\n");
         printf("  -L, --no-last-name† † Does not generate a last name (ignored if -S or -P is set).\n");
         printf("  -S <surname>, --set-last-name <surname>† Sets the surname for all generated names (overrides -L and random generation).\n");
         printf("  -v, --verbose† † Show more information about the debug.\n");
         printf("  -h, --help† † Displays help.\n");
         printf("  -V, --version† † Displays the version number and exits.\n");
-        printf("Without flags, the program asks for the season interactively.\n");
         goto cleanup_and_exit;
     }
 
@@ -590,7 +584,85 @@ int main(int argc, char *argv[]) {
                     (generate_last_name ? "Generated" : "No"));
         }
     } else {
-        // Interaktiivinen kysely on ennallaan, ei tarvitse n‰ytt‰‰ t‰ss‰
+        // Interaktiivinen kysely
+        print_available_decades(&first_names);
+        int valinta = 0;
+
+        printf("Enter the period number for name generation (1-%d) or 0 to exit: ", first_names.num_decades);
+        if (scanf("%d", &valinta) != 1 || valinta < 0 || valinta > first_names.num_decades) {
+            printf("Incorrect choice.\n");
+            period_index = -1;
+        } else if (valinta > 0) {
+            period_index = valinta - 1;
+
+            // Kysy parigenerointi (UUSI LISƒYS)
+            printf("Generate names for a couple (M+F)? (1=Yes, 0=No, default 0): ");
+            int couple_input = 0;
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF); // Puhdista puskuri
+
+            if (scanf("%d", &couple_input) == 1 && (couple_input == 0 || couple_input == 1)) {
+                couple_mode = couple_input;
+                if (couple_mode == 1) {
+                    generate_last_name = 1; // Pakota sukunimi paritilassa
+                }
+            } else {
+                printf("Invalid choice or using default (No).\n");
+                couple_mode = 0;
+            }
+
+            // Kysy nimi‰
+            printf("How many %s to generate (default 1): ", couple_mode ? "couples" : "names");
+            int count_input = 0;
+            while ((c = getchar()) != '\n' && c != EOF);
+
+            if (scanf("%d", &count_input) == 1 && count_input > 0) {
+                name_count = count_input;
+            } else {
+                printf("Invalid number or using default (1 %s).\n", couple_mode ? "couple" : "name");
+                name_count = 1;
+            }
+
+            // Kysy keskinimen todenn‰kˆisyys
+            printf("Middle name probability (0-100, default 50): ");
+            int chance_input = 0;
+            while ((c = getchar()) != '\n' && c != EOF);
+
+            if (scanf("%d", &chance_input) == 1 && chance_input >= 0 && chance_input <= 100) {
+                middle_name_chance = chance_input;
+            } else {
+                printf("Invalid probability or using default (50%%).\n");
+                middle_name_chance = 50;
+            }
+
+            // Kysy keskinimien maksimim‰‰r‰
+            printf("Max middle names (1-3, default 1): ");
+            int max_input = 1;
+            while ((c = getchar()) != '\n' && c != EOF);
+
+            if (scanf("%d", &max_input) == 1 && max_input >= 1 && max_input <= 3) {
+                max_middle_names = max_input;
+            } else {
+                printf("Invalid choice or using default (1).\n");
+                max_middle_names = 1;
+            }
+
+            // Kysy sukunimen generointi vain, jos ei ole paritila
+            if (couple_mode == 0) {
+                printf("Generate last name? (1=Yes, 0=No, default 1): ");
+                int last_name_input = 1;
+                while ((c = getchar()) != '\n' && c != EOF);
+
+                if (scanf("%d", &last_name_input) == 1 && (last_name_input == 0 || last_name_input == 1)) {
+                    generate_last_name = last_name_input;
+                } else {
+                    printf("Invalid choice or using default (Yes).\n");
+                    generate_last_name = 1;
+                }
+            }
+        } else {
+            period_index = -1;
+        }
     }
 
     // --- B. GENERATION LOHKO ---
@@ -610,13 +682,11 @@ int main(int argc, char *argv[]) {
 
                 // 1. GENERATE MALE NAME (to get the last name)
                 const char *male_surname = NULL;
-                char male_surname_buffer[100]; // Puskuri miehen sukunimelle
+                char male_surname_buffer[100];
 
-                // Jos override on asetettu, k‰yt‰ sit‰
                 if (override_last_name != NULL) {
                     male_surname = override_last_name;
                 } else {
-                    // Generoi uusi sukunimi (ja tallenna se)
                     const char *generated_surname = select_random_name(&last_names_simple);
                     if (strlen(generated_surname) > 0) {
                         strcpy(male_surname_buffer, generated_surname);
@@ -632,11 +702,10 @@ int main(int argc, char *argv[]) {
                                         middle_name_chance, 1, male_surname, max_middle_names);
 
                 // 2. GENERATE FEMALE NAME (using male's last name)
-                // Kutsu generointifunktiota naiselle k‰ytt‰en miehen sukunime‰ override-parametrin‰
                 generate_and_print_name(period_index, 1, verbose_flag,
                                         female_first_set, female_middle_set, &last_names_simple,
                                         middle_name_chance, 1, male_surname, max_middle_names);
-                printf("---\n"); // Erottele parit
+                printf("---\n");
             }
             printf("-----------------------------------\n");
 
