@@ -24,73 +24,98 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 // Versio: MAJOR.MINOR.PATCH
 #define VERSION_MAJOR 0
-#define VERSION_MINOR 3
-#define VERSION_PATCH 0 // Versio 0.2.1: Interaktiivinen tuki parigeneroinnille ja Help-tekstin siistiminen
+#define VERSION_MINOR 4
+#define VERSION_PATCH 17 //
 
 // Luodaan versionumerosta merkkijono tulostusta varten
-#define VERSION_STRING "0.3.0"
+#define VERSION_STRING "0.4.17"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <ctype.h>
 #include <locale.h>
-#include <errno.h>
-#include <math.h>
-
+#include <time.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-// Makrot
-#define MAX_NAME_LENGTH 4096
-#define MAX_LINE_LENGTH 1024
-#define MAX_NAMES 50000
+// --- KONFIGURAATIO JA MAKROT ---
+#define MAX_LINE_LENGTH 512
+#define MAX_NAME_LENGTH 64
+#define MAX_NAMES 500
 #define MAX_PERIODS 7
+#define MAX_FAMILIES 10
 
-// --- 1. TIETORAKENTEET ---
+// --- TIETORAKENTEET ---
 
 typedef struct {
     char name[MAX_NAME_LENGTH];
-} Name;
+} NameEntry;
 
 typedef struct {
-    Name *names;
+    NameEntry names[MAX_NAMES];
     int count;
-} NameList;
+} NamePeriodList;
 
 typedef struct {
-    NameList periods[MAX_PERIODS];
+    NamePeriodList periods[MAX_PERIODS]; // Indeksit 0-6 vastaavat periodeja 1-7
     int total_names;
-} DecadeData;
+} MultiPeriodNames;
 
 typedef struct {
-    char *male_first_file;
-    char *male_middle_file;
-    char *female_first_file;
-    char *female_middle_file;
-    char *last_file_simple;
-} ConfigPaths;
+    NameEntry names[MAX_NAMES];
+    int count;
+} SimpleNameList;
 
-ConfigPaths app_paths = { NULL, NULL, NULL, NULL, NULL };
+typedef struct {
+    char male_first_names[MAX_LINE_LENGTH];
+    char male_middle_names[MAX_LINE_LENGTH];
+    char female_first_names[MAX_LINE_LENGTH];
+    char female_middle_names[MAX_LINE_LENGTH];
+    char last_names[MAX_LINE_LENGTH];
+} AppPaths;
 
+// --- GLOBAALIT MUUTTUJAT ---
+MultiPeriodNames first_names = {0};
+MultiPeriodNames middle_names = {0};
+MultiPeriodNames female_first_names = {0};
+MultiPeriodNames female_middle_names = {0};
+SimpleNameList last_names = {0};
+AppPaths app_paths = {0};
+
+
+// --- APUFUNKTIOT (STRING HANDLING) ---
+// LISÄÄ TÄMÄ FUNKTIO SYÖTEPUSERIN SIIVOUKSEEN
 void clear_input_buffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+// LISÄÄ NÄMÄ MUISTIN VAPAUTUS FUNKTIOT (Jos et käytä mallocia, jätä ne tyhjiksi)
+void free_decade_data(void *data) {
+    // Tässä versiossa oletetaan, että dynaamista muistia ei ole varattu taulukoille (MAX_NAMES on vakio).
+    // Jätetään toistaiseksi tyhjäksi, jotta linkkerivirhe korjaantuu.
+}
 
-// --- 2. APUFUNKTIOT (Muistinhallinta, String-käsittely & Lataus) ---
+void free_names(void *data) {
+    // Jätetään toistaiseksi tyhjäksi, jotta linkkerivirhe korjaantuu.
+}
+
 
 char* trim_leading_spaces(char *str) {
     if (str == NULL) return NULL;
     while (isspace((unsigned char)*str)) {
         str++;
     }
+    return str;
+}
+
+// UUSI FUNKTIO V0.4.17: Poistaa välilyönnit/tyhjät merkit merkkijonon lopusta
+char* trim_trailing_spaces(char *str) {
+    if (str == NULL) return NULL;
     size_t len = strlen(str);
-    if (len == 0) return str;
     while (len > 0 && isspace((unsigned char)str[len - 1])) {
         str[len - 1] = '\0';
         len--;
@@ -98,321 +123,288 @@ char* trim_leading_spaces(char *str) {
     return str;
 }
 
-char* trim_and_lower(char *str) {
-    if (str == NULL) return NULL;
-    char *trimmed = trim_leading_spaces(str);
-    for (char *p = trimmed; *p; p++) {
-        *p = tolower((unsigned char)*p);
-    }
-    return trimmed;
-}
-
-void free_config_paths() {
-    if (app_paths.male_first_file) free(app_paths.male_first_file);
-    if (app_paths.male_middle_file) free(app_paths.male_middle_file);
-    if (app_paths.female_first_file) free(app_paths.female_first_file);
-    if (app_paths.female_middle_file) free(app_paths.female_middle_file);
-    if (app_paths.last_file_simple) free(app_paths.last_file_simple);
-}
-
-void load_config(const char *filename, int verbose) {
-    app_paths.male_first_file = strdup("data/FI-fi/Finnish-men-first-names.csv");
-    app_paths.male_middle_file = strdup("data/FI-fi/Finnish-men-seconds-names.csv");
-    app_paths.female_first_file = strdup("data/FI-fi/Finnish-women-first-names.csv");
-    app_paths.female_middle_file = strdup("data/FI-fi/Finnish-women-middle-names.csv");
-    app_paths.last_file_simple = strdup("data/FI-fi/Finnish-last-names.csv");
-
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        if (verbose) {
-            fprintf(stderr, "WARNING: Config file '%s' not found. Using default paths.\n", filename);
-        }
-        return;
-    }
-
-    char buffer[MAX_LINE_LENGTH];
-    int paths_updated = 0;
-
-    while (fgets(buffer, MAX_LINE_LENGTH, file) != NULL) {
-        char *line = buffer;
-        line = trim_leading_spaces(line);
-        if (strlen(line) == 0 || line[0] == ';' || line[0] == '#' || line[0] == '[') {
-            continue;
-        }
-
-        char *equal_sign = strchr(line, '=');
-        if (equal_sign == NULL) {
-            continue;
-        }
-
-        *equal_sign = '\0';
-        char *key = trim_and_lower(line);
-        char *value = trim_leading_spaces(equal_sign + 1);
-
-        if (strlen(key) == 0 || strlen(value) == 0) {
-            continue;
-        }
-
-        if (strcmp(key, "male_first_names") == 0) { free(app_paths.male_first_file); app_paths.male_first_file = strdup(value); paths_updated++; }
-        else if (strcmp(key, "male_middle_names") == 0) { free(app_paths.male_middle_file); app_paths.male_middle_file = strdup(value); paths_updated++; }
-        else if (strcmp(key, "female_first_names") == 0) { free(app_paths.female_first_file); app_paths.female_first_file = strdup(value); paths_updated++; }
-        else if (strcmp(key, "female_middle_names") == 0) { free(app_paths.female_middle_file); app_paths.female_middle_file = strdup(value); paths_updated++; }
-        else if (strcmp(key, "last_names") == 0) { free(app_paths.last_file_simple); app_paths.last_file_simple = strdup(value); paths_updated++; }
-    }
-
-    fclose(file);
-    if (verbose) {
-        printf("Configuration loaded from '%s'. Updated %d file paths.\n", filename, paths_updated);
-    }
-}
-
-void free_names(NameList *list) {
-    if (list->names) {
-        free(list->names);
-        list->names = NULL;
-        list->count = 0;
-    }
-}
-
-void free_decade_data(DecadeData *data) {
-    for (int i = 0; i < MAX_PERIODS; i++) {
-        free_names(&data->periods[i]);
-    }
-    data->total_names = 0;
-}
-
+// Tarkistaa, onko merkkijono kelvollinen nimi (ei numeroita)
 int is_valid_name(const char *name) {
-    for (int i = 0; name[i] != '\0'; i++) {
-        if (!isalpha((unsigned char)name[i]) &&
-            name[i] != ' ' && name[i] != '-') {
+    if (name == NULL || *name == '\0') {
+        return 0;
+    }
+    for (size_t i = 0; i < strlen(name); i++) {
+        // Sallii vain kirjaimet (ASCII + erikoismerkit) ja välilyönnit
+        if (!isalpha((unsigned char)name[i]) && !isspace((unsigned char)name[i]) && name[i] != '-') {
             return 0;
         }
     }
     return 1;
 }
 
-void load_names_simple(const char *filename, NameList *list, int verbose) {
-    if (filename == NULL) return;
+// --- KONFIGURAATION LUKU ---
+
+// Lukee arvot config.ini-tiedostosta
+int load_config(const char *filename, AppPaths *paths) {
     FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        fprintf(stderr, "ERROR: Cannot open name file: %s (Skipping load)\n", filename);
-        return;
+    if (!file) {
+        // Jos tiedostoa ei löydy, käytetään oletusarvoja
+        printf("WARNING: Could not open config file '%s'. Using default paths.\n", filename);
+        // Oletusarvot tähän, jos configia ei ladata
+        strcpy(paths->male_first_names, "data/FI-fi/Finnish-men-first-names.csv");
+        strcpy(paths->male_middle_names, "data/FI-fi/Finnish-men-seconds-names.csv");
+        strcpy(paths->female_first_names, "data/FI-fi/Finnish-women-first-names.csv");
+        strcpy(paths->female_middle_names, "data/FI-fi/Finnish-women-middle-names.csv");
+        strcpy(paths->last_names, "data/FI-fi/Finnish-last-names.csv");
+        return 0; // Palautetaan 0, koska oletusarvot asetettiin
     }
 
-    list->count = 0;
-    list->names = (Name *)malloc(MAX_NAMES * sizeof(Name));
-    if (list->names == NULL) {
-        fprintf(stderr, "ERROR: Memory allocation failed for simple name list.\n");
-        fclose(file);
-        return;
-    }
+    char line[MAX_LINE_LENGTH];
+    int count = 0;
 
-    char buffer[MAX_NAME_LENGTH];
-    while (fgets(buffer, MAX_NAME_LENGTH, file) != NULL && list->count < MAX_NAMES) {
-        buffer[strcspn(buffer, "\n\r")] = 0;
-        char *name = trim_leading_spaces(buffer);
+    // Asetetaan alkuun tyhjät merkkijonot
+    paths->male_first_names[0] = '\0';
+    paths->male_middle_names[0] = '\0';
+    paths->female_first_names[0] = '\0';
+    paths->female_middle_names[0] = '\0';
+    paths->last_names[0] = '\0';
 
-        char *comma_pos = strchr(name, ',');
-        if (comma_pos != NULL) {
-            *comma_pos = '\0';
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n\r")] = 0; // Poistaa rivinvaihdot
+
+        if (line[0] == '[' || line[0] == ';' || line[0] == '#' || line[0] == '\0') {
+            continue; // Ohitetaan osion otsikot, kommentit ja tyhjät rivit
         }
 
-        char *final_name = trim_leading_spaces(name);
+        char *equals_sign = strchr(line, '=');
+        if (equals_sign) {
+            *equals_sign = '\0'; // Jaetaan avain ja arvo
 
+            char *key = trim_leading_spaces(line);
+            key = trim_trailing_spaces(key);
+            char *value = trim_leading_spaces(equals_sign + 1);
+            value = trim_trailing_spaces(value);
 
-        if (strlen(final_name) > 0 && is_valid_name(final_name)) {
-            strcpy(list->names[list->count].name, final_name);
-            list->count++;
-        } else if (strlen(final_name) > 0 && verbose) {
-            fprintf(stderr, "WARNING: Skipping invalid name candidate: '%s' in %s\n", final_name, filename);
+            if (strcmp(key, "male_first_names") == 0) strcpy(paths->male_first_names, value);
+            else if (strcmp(key, "male_middle_names") == 0) strcpy(paths->male_middle_names, value);
+            else if (strcmp(key, "female_first_names") == 0) strcpy(paths->female_first_names, value);
+            else if (strcmp(key, "female_middle_names") == 0) strcpy(paths->female_middle_names, value);
+            else if (strcmp(key, "last_names") == 0) strcpy(paths->last_names, value);
+
+            count++;
         }
     }
 
     fclose(file);
-    if (verbose) {
-        printf("Loaded %d names from %s\n", list->count, filename);
-    }
+    return count;
 }
 
-// VANHA load_names_multi_column poistettu / korvattu alla olevalla logiikalla
 
-// UUSI FUNKTIO: Lataa nimet, joissa jokainen sarake on nimi (kuten käyttäjän datassa)
-void load_names_period_list(const char *filename, DecadeData *data, int verbose) {
-    if (filename == NULL) return;
+// --- DATAN LATAUSFUNKTIOT ---
+
+// UUSI FUNKTIO V0.4.16: Lataa nimet tiedostosta, jossa sarakkeet ovat periodeja.
+int load_names_period_list(const char *filename, MultiPeriodNames *data, int verbose_flag) {
     FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        fprintf(stderr, "ERROR: Cannot open name list file: %s (Skipping load)\n", filename);
-        return;
-    }
-
-    data->total_names = 0;
-
-    // Alusta DecadeData
-    for (int i = 0; i < MAX_PERIODS; i++) {
-        data->periods[i].count = 0;
-        if (data->periods[i].names == NULL) {
-            data->periods[i].names = (Name *)malloc(MAX_NAMES * sizeof(Name));
-        }
-        if (data->periods[i].names == NULL) {
-             fprintf(stderr, "ERROR: Memory allocation failed for DecadeData period %d.\n", i);
-             fclose(file);
-             return;
-        }
+    if (!file) {
+        if (verbose_flag) printf("ERROR: Failed to open file: %s\n", filename);
+        return 0;
     }
 
     char buffer[MAX_LINE_LENGTH];
-
-    // OHITA OTSIKKORIVI
-    if (fgets(buffer, MAX_LINE_LENGTH, file) == NULL) {
+    // Ohitetaan otsikkorivi
+    if (fgets(buffer, sizeof(buffer), file) == NULL) {
         fclose(file);
-        return;
+        return 0;
     }
 
-    while (fgets(buffer, MAX_LINE_LENGTH, file) != NULL) {
-        char *token;
-        char *saveptr;
-        int period_index = 0;
+    // Asetetaan alkuun nollat
+    data->total_names = 0;
+    for (int i = 0; i < MAX_PERIODS; i++) {
+        data->periods[i].count = 0;
+    }
 
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        // TÄRKEÄÄ! Poistaa molemmat \n ja \r
         buffer[strcspn(buffer, "\n\r")] = 0;
 
         char temp_buffer[MAX_LINE_LENGTH];
         strcpy(temp_buffer, buffer);
 
-        // Loopataan MAX_PERIODS + 1 (jos ensimmäinen sarake on juurinimi)
-        // Kuitenkin, data vaikuttaa olevan vain 7 saraketta + nimeä alussa, joten luotetaan:
+        char *token;
+        char *rest = temp_buffer;
+        int i = 0;
 
-        // Ensimmäinen token (sarake 1) on usein rivin nimi. Meillä on MAX_PERIODS = 7
-        // Luetaan 8 tokenia (sarake 0 + sarake 1..7)
-        for(int i = 0; i <= MAX_PERIODS; i++) {
-            token = strtok_r((i == 0) ? temp_buffer : NULL, ",", &saveptr);
+        while ((token = strtok_r(rest, ",", &rest))) {
+            if (i >= MAX_PERIODS) break; // Varmistaa, ettei ylitetä taulukon kokoa
 
-            if (token == NULL) break;
+            int period_index = i;
 
-            // Ohita ensimmäinen sarake (i == 0)
-            if (i == 0) continue;
-
-            // period_index on nyt 0..6 (MAX_PERIODS)
-            period_index = i - 1;
-
+            // Kaksi vaihetta trimmaus (alku ja loppu)
             char *name_candidate = trim_leading_spaces(token);
+            name_candidate = trim_trailing_spaces(name_candidate); // V0.4.17 KORJAUS
 
             if (strlen(name_candidate) > 0 && is_valid_name(name_candidate) && data->periods[period_index].count < MAX_NAMES) {
 
+                // Nimi on kelvollinen: tallennetaan listaan
                 strcpy(data->periods[period_index].names[data->periods[period_index].count].name, name_candidate);
                 data->periods[period_index].count++;
                 data->total_names++;
+
+            } else if (strlen(name_candidate) > 0 && !is_valid_name(name_candidate)) {
+                // Tunnistetaan, jos yritetään parsia jotain, joka ei ole nimi
+                if (verbose_flag) {
+                    printf("WARNING: Skipping invalid name candidate: '%s' in %s\n", name_candidate, filename);
+                }
+            }
+            i++;
+        }
+    }
+
+    fclose(file);
+    return data->total_names;
+}
+
+// Lataa sukunimet yksinkertaisesta yhden sarakkeen listasta
+int load_last_names(const char *filename, SimpleNameList *data, int verbose_flag) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        if (verbose_flag) printf("ERROR: Failed to open last name file: %s\n", filename);
+        return 0;
+    }
+
+    char buffer[MAX_LINE_LENGTH];
+    data->count = 0;
+
+    // Ohitetaan otsikkorivi
+    if (fgets(buffer, sizeof(buffer), file) == NULL) {
+        fclose(file);
+        return 0;
+    }
+
+    while (fgets(buffer, sizeof(buffer), file)) {
+        buffer[strcspn(buffer, "\n\r")] = 0;
+
+        char *name_candidate = trim_leading_spaces(buffer);
+        name_candidate = trim_trailing_spaces(name_candidate);
+
+        if (strlen(name_candidate) > 0 && is_valid_name(name_candidate) && data->count < MAX_NAMES) {
+            strcpy(data->names[data->count].name, name_candidate);
+            data->count++;
+        } else if (strlen(name_candidate) > 0 && !is_valid_name(name_candidate)) {
+            if (verbose_flag) {
+                printf("WARNING: Skipping invalid name candidate: '%s' in %s\n", name_candidate, filename);
             }
         }
     }
 
     fclose(file);
-    if (verbose) {
-        printf("Loaded %d total name entries across %d periods from %s\n", data->total_names, MAX_PERIODS, filename);
-    }
+    return data->count;
 }
 
 
-char* get_random_name(NameList *list) {
-    if (list->count == 0 || list->names == NULL) {
+// --- GENERATION FUNKTIOT ---
+
+// Valitsee satunnaisen nimen listasta
+const char* get_random_name(const NamePeriodList *list) {
+    if (list->count == 0) {
         return NULL;
     }
-    int index = rand() % list->count;
-    return list->names[index].name;
+    return list->names[rand() % list->count].name;
 }
 
-// --- 3. GENERATION LOGIC (Pysyy samana) ---
+// Generoi koko nimen ja tulostaa sen
+void generate_and_print_name(int period_index, char gender, int max_middle_names, int middle_chance, const char *surname, int include_age, int family_mode, int parent_mode) {
 
-void generate_and_print_name(
-    NameList *first_names,
-    NameList *middle_names,
-    NameList *last_names,
-    const char *surname_override,
-    int middle_name_chance,
-    int max_middle_names,
-    int no_last_name,
-    char *output_buffer
-) {
-    output_buffer[0] = '\0';
+    // Asetetaan nimilistat sukupuolen mukaan
+    const MultiPeriodNames *first_list = (gender == 'M') ? &first_names : &female_first_names;
+    const MultiPeriodNames *middle_list = (gender == 'M') ? &middle_names : &female_middle_names;
 
-    char *name;
+    const NamePeriodList *first_names_period = &first_list->periods[period_index];
+    const NamePeriodList *middle_names_period = &middle_list->periods[period_index];
 
-    if (first_names->count == 0) {
-        snprintf(output_buffer, MAX_LINE_LENGTH, "ERROR: Could not generate first name (List empty).");
+    // Nimen saatavuustarkistus (kriittinen perhegeneroinnissa)
+    if (first_names_period->count == 0 || (max_middle_names > 0 && middle_names_period->count == 0)) {
+        if (family_mode) {
+            printf("ERROR: Cannot generate %s. Name data missing for period %d. Skipping generation.\n",
+                   (parent_mode ? "parent" : "child"), period_index + 1);
+        } else {
+            printf("ERROR: Cannot generate name. Name data missing for period %d. Skipping generation.\n", period_index + 1);
+        }
         return;
     }
 
     // 1. Etunimi
-    name = get_random_name(first_names);
-    if (name != NULL) {
-        strncat(output_buffer, name, MAX_LINE_LENGTH - strlen(output_buffer) - 1);
-    } else {
-        snprintf(output_buffer, MAX_LINE_LENGTH, "ERROR: Could not generate first name (List count: %d).", first_names->count);
+    const char *first = get_random_name(first_names_period);
+
+    if (first == NULL) {
+        // Tämä pitäisi olla mahdotonta aiemman count-tarkistuksen ansiosta, mutta turvallisuuden vuoksi.
+        printf("ERROR: First name generation failed.\n");
         return;
     }
 
+    printf("%s", first);
+
     // 2. Keskinimet
-    int middle_count = 0;
-    while (middle_count < max_middle_names && strlen(output_buffer) < MAX_LINE_LENGTH - MAX_NAME_LENGTH) {
-        if (rand() % 100 < middle_name_chance) {
-            if (middle_names->count == 0) {
-                break;
+    int num_middle = 0;
+    if (max_middle_names > 0) {
+        // Jos keskinimiä pyydetään, valitaan niiden määrä (1..max_middle_names)
+        for (int m = 0; m < max_middle_names; m++) {
+            if ((rand() % 100) < middle_chance) {
+                const char *middle = get_random_name(middle_names_period);
+                if (middle) {
+                    printf(" %s", middle);
+                    num_middle++;
+                }
             }
-            name = get_random_name(middle_names);
-            if (name != NULL) {
-                strncat(output_buffer, " ", MAX_LINE_LENGTH - strlen(output_buffer) - 1);
-                strncat(output_buffer, name, MAX_LINE_LENGTH - strlen(output_buffer) - 1);
-                middle_count++;
-            } else {
-                break;
-            }
-        } else {
-            break;
         }
     }
 
     // 3. Sukunimi
-    if (!no_last_name) {
-        const char *last_name_to_use = NULL;
-
-        if (surname_override != NULL) {
-            last_name_to_use = surname_override;
-        } else if (last_names != NULL && last_names->count > 0) {
-            last_name_to_use = get_random_name(last_names);
-        }
-
-        if (last_name_to_use != NULL) {
-            strncat(output_buffer, " ", MAX_LINE_LENGTH - strlen(output_buffer) - 1);
-            strncat(output_buffer, last_name_to_use, MAX_LINE_LENGTH - strlen(output_buffer) - 1);
-        } else if (surname_override == NULL) {
-            if (strlen(output_buffer) + 20 < MAX_LINE_LENGTH) {
-                strncat(output_buffer, " (No Random Last Name)", MAX_LINE_LENGTH - strlen(output_buffer) - 1);
-            }
+    if (surname && strlen(surname) > 0) {
+        printf(" %s", surname);
+    } else if (last_names.count > 0 && !family_mode) {
+        // Valitaan sukunimi suoraan SimpleNameList-rakenteesta
+        const char *last = last_names.names[rand() % last_names.count].name;
+        if (last) {
+            printf(" %s", last);
         }
     }
+
+    // 4. Syntymävuosi
+    if (include_age) {
+        int base_year = 1860 + (period_index * 10);
+        int birth_year = base_year + (rand() % 10);
+
+        if (family_mode) {
+            // Perhemoodissa vanhempien ikä sijoitetaan periodin sisään
+            if (parent_mode) {
+                printf(" (Born: %d)", birth_year);
+            }
+            // Lasten iät lasketaan myöhemmin generate_family -funktiossa
+        } else {
+            printf(" (Born: %d)", birth_year);
+        }
+    }
+
+    printf("\n");
 }
 
 
-// --- 4. MAIN PROGRAM ---
+// --- MAIN LOOP JA HELPPERIT ---
 
 void print_help() {
-    // Käytä vain suoraan tiedossa olevia makroja (kuten MAX_PERIODS)
-    // Tässä käytämme suoraan numeroa 7, koska se on oletus.
-
-    printf("namegen\n");
+    // KORJATTU v.0.4.17: Poistettu tuntemattomat muuttujat (data, filename) ja goto
+    printf("NameGen (v.0.4.17)\n");
     printf("\n");
     printf("Usage: namegen.exe [-h] [-v] [-p <Number>] [-g <M/F>] [-n <count>] ...\n");
     printf("\n");
     printf("Options:\n");
-    printf("  -p <number>, --period <number>        Selects the time period (1-7).\n");
-    printf("  -g <gender>, --gender <M/F>           Selects gender (ignored if -P is used).\n");
-    printf("  -n <count>, --count <count>           Specifies the number of names (or couples).\n");
-    printf("  -P, --couple                          Generates names for a couple (M+F).\n");
-    printf("  -F, --family                          Generates a family (Parents + Kids).\n");
-    printf("  -A, --age                             Includes birth year/age.\n");
-    printf("  -S <surname>, --set-last-name <name>  Sets the surname for all generated names.\n");
-    printf("  -L, --no-last-name                    Does not generate a last name.\n");
+    printf("  -p <number>, --period <number>        Selects the time period (1-%d, 0=Random).\n", MAX_PERIODS);
+    printf("  -g <gender>, --gender <M/F>           Selects gender (M/F, default M).\n");
+    printf("  -n <count>, --count <count>           Number of names to generate (default 1).\n");
     printf("  -m <chance>, --middle-chance <chance> Middle name probability (0-100, default 50).\n");
     printf("  -M <max>, --max-middle-names <max>    Max number of middle names (1-3, default 1).\n");
+    printf("  -A, --age                             Includes birth year/age.\n");
+    printf("  -P, --couple                          Generates names for a couple (M+F).\n");
+    printf("  -F, --family                          Generates a family (Parents + Kids).\n");
+    printf("  -R, --random-kids                     Randomize number of children (1-5).\n");
+    printf("  -S <surname>, --set-last-name <name>  Sets the surname for all generated names.\n");
+    printf("  -L, --no-last-name                    Does not generate a last name.\n");
     printf("  -v, --verbose                         Show verbose output (file loading).\n");
     printf("  -h, --help                            Displays this help message.\n");
     printf("  -V, --version                         Displays the version number.\n");
@@ -443,21 +435,25 @@ int main(int argc, char *argv[]) {
     int middle_name_chance = 50;
     int max_middle_names = 1;
     int no_last_name = 0;
-    int interactive_mode = 1;
+    int interactive_mode = 0;
 
     // --- ESIVALMISTELU & PARAMETRIEN LUKU ---
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
             verbose_flag = 1;
-            break;
         }
     }
-    load_config("config.ini", verbose_flag);
+    load_config("config.ini", &app_paths);
+
+    // Jos mitään muita parametreja ei annettu kuin mahdollinen '-v', aseta interaktiivinen tila
+    if (argc == 1) {
+        interactive_mode = 1;
+    }
 
     for (int i = 1; i < argc; i++) {
         interactive_mode = 0;
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) { print_help(); goto cleanup_and_exit; }
-        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) { printf("Name Source Generator v0.3.0 Name List Optimized\n"); goto cleanup_and_exit; }
+        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) { printf("Namegen v.0.4.17\n"); goto cleanup_and_exit; }
 
         else if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--period") == 0) { if (i + 1 < argc) period_num = atoi(argv[++i]); }
         else if (strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--count") == 0) { if (i + 1 < argc) count = atoi(argv[++i]); }
@@ -490,7 +486,7 @@ int main(int argc, char *argv[]) {
         int choice;
         printf("--- Interactive Name Generation ---\n");
 
-        printf("Select period (1=1860s, 7=1920s, 0=Random): ");
+        printf("Select period (1=1860s - 7=1920s, 0=Random): ");
         if (scanf("%d", &period_num) != 1) { period_num = 0; }
         clear_input_buffer();
         // ... (Interaktiivinen logiikka jatkuu)
@@ -563,16 +559,24 @@ int main(int argc, char *argv[]) {
 
     if (period_num < 0 || period_num > MAX_PERIODS) period_num = 0;
 
-    // --- TIEDOSTOJEN LATAUS: NIMIDATALLE OPTIMOITU ---
-    DecadeData first_names = {0};
-    DecadeData middle_names = {0};
-    DecadeData female_first_names = {0};
-    DecadeData female_middle_names = {0};
-    NameList last_names_simple = {0};
-
     if (verbose_flag) {
         printf("--- Reading files (using paths from config.ini) ---\n");
     }
+
+
+
+    // Ladataan nimet globaaleihin muuttujiin (MultiPeriodNames & SimpleNameList)
+    int loaded_count = 0;
+
+    loaded_count += load_names_period_list(app_paths.male_first_names, &first_names, 1); // <-- Aseta verbose 1
+    loaded_count += load_names_period_list(app_paths.male_middle_names, &middle_names, 1); // <-- Aseta verbose 1
+    loaded_count += load_names_period_list(app_paths.female_first_names, &female_first_names, 1); // <-- Aseta verbose 1
+    loaded_count += load_names_period_list(app_paths.female_middle_names, &female_middle_names, 1); // <-- Aseta verbose 1
+    loaded_count += load_last_names(app_paths.last_names, &last_names, 1); // <-- Aseta verbose 1
+
+    if (loaded_count == 0) {
+    fprintf(stderr, "\n*** FATAL ERROR: No name data loaded. Check 'config.ini' and data file paths. ***\n");
+    };
 
     // Lisää tämä koodi main-funktioon tiedostojen latauksen jälkeen
     if (verbose_flag) {
@@ -585,147 +589,108 @@ int main(int argc, char *argv[]) {
     printf("--------------------------------------\n");
 }
 
-    // 1. Monisarakkeiset tiedostot: KÄYTÄ UUTTA load_names_period_list -FUNKTIOTA
-    load_names_period_list(app_paths.male_first_file, &first_names, verbose_flag);
-    load_names_period_list(app_paths.male_middle_file, &middle_names, verbose_flag);
-    load_names_period_list(app_paths.female_first_file, &female_first_names, verbose_flag);
-    load_names_period_list(app_paths.female_middle_file, &female_middle_names, verbose_flag);
-
-    // 2. Sukunimet
-    int generate_last_name = !no_last_name;
-    if (generate_last_name && surname_override == NULL) {
-        load_names_simple(app_paths.last_file_simple, &last_names_simple, verbose_flag);
-    }
-
-
     int random_period = (period_num == 0);
     char output_buffer[MAX_LINE_LENGTH];
 
-    // --- GENERATION LOOP (Pysyy samana) ---
-    for (int i = 0; i < count; i++) {
-        int current_period_index;
-        if (random_period) {
-            current_period_index = rand() % MAX_PERIODS;
-        } else {
-            current_period_index = period_num - 1;
-        }
-
-        int birth_year = 0;
-        if (age_mode) {
-            int decade_start = 1860 + (current_period_index * 10);
-            birth_year = decade_start + (rand() % 10);
-        }
-
-        NameList *male_first = &first_names.periods[current_period_index];
-        NameList *male_middle = &middle_names.periods[current_period_index];
-        NameList *female_first = &female_first_names.periods[current_period_index];
-        NameList *female_middle = &female_middle_names.periods[current_period_index];
-
-        if (family_mode) {
-            // **PERHETILA**
-            if (male_first->count == 0 || female_first->count == 0) {
-                fprintf(stderr, "ERROR: Cannot generate family. Name data missing for period %d. Skipping generation.\n", current_period_index + 1);
-                continue;
-            }
-            // ... (Generointilogiikka pysyy samana)
-            const char *family_surname = NULL;
-            if (surname_override != NULL) {
-                family_surname = surname_override;
-            } else if (last_names_simple.count > 0) {
-                family_surname = get_random_name(&last_names_simple);
-            }
-
-            int current_num_kids = num_kids;
-            if (random_kids_mode) {
-                current_num_kids = 1 + (rand() % 5);
-            }
-
-            printf("--- Family %d (Period %d) ---\n", i + 1, current_period_index + 1);
-
-            // 1. Isä (Male Parent)
-            generate_and_print_name(male_first, male_middle, NULL, family_surname, middle_name_chance, max_middle_names, 0, output_buffer);
-            printf("Father: %s", output_buffer);
-            if (age_mode) { printf(" (Born: %d)", birth_year); }
-            printf("\n");
-
-            // 2. Äiti (Female Parent)
-            generate_and_print_name(female_first, female_middle, NULL, family_surname, middle_name_chance, max_middle_names, 0, output_buffer);
-            printf("Mother: %s", output_buffer);
-            if (age_mode) { printf(" (Born: %d)", birth_year); }
-            printf("\n");
-
-            // 3. Lapset (Kids)
-            for (int k = 0; k < current_num_kids; k++) {
-                char kid_gender = (rand() % 2 == 0) ? 'M' : 'F';
-
-                NameList *kid_first = (kid_gender == 'M') ? male_first : female_first;
-                NameList *kid_middle = (kid_gender == 'M') ? male_middle : female_middle;
-
-                int kid_birth_year = birth_year + 5 + (rand() % 11);
-
-                generate_and_print_name(kid_first, kid_middle, NULL, family_surname, middle_name_chance, max_middle_names, 0, output_buffer);
-                printf("Child %d (%c): %s", k + 1, kid_gender, output_buffer);
-                if (age_mode) { printf(" (Born: %d)", kid_birth_year); }
-                printf("\n");
-            }
-            printf("-----------------\n");
-
-
-        } else if (couple_mode) {
-            // **PARITILA**
-            if (male_first->count == 0 || female_first->count == 0) {
-                fprintf(stderr, "ERROR: Cannot generate couple. Name data missing for period %d. Skipping generation.\n", current_period_index + 1);
-                continue;
-            }
-
-            const char *couple_surname = NULL;
-            if (surname_override != NULL) {
-                couple_surname = surname_override;
-            } else if (last_names_simple.count > 0) {
-                couple_surname = get_random_name(&last_names_simple);
-            }
-
-            generate_and_print_name(male_first, male_middle, NULL, couple_surname, middle_name_chance, max_middle_names, 0, output_buffer);
-            printf("Male: %s", output_buffer);
-            if (age_mode) { printf(" (Born: %d)", birth_year); }
-            printf("\n");
-
-            generate_and_print_name(female_first, female_middle, NULL, couple_surname, middle_name_chance, max_middle_names, 0, output_buffer);
-            printf("Female: %s", output_buffer);
-            if (age_mode) { printf(" (Born: %d)", birth_year); }
-            printf("\n");
-
-        } else {
-            // **YKSITTÄINEN NIMI**
-            NameList *current_first, *current_middle;
-            if (gender == 'F') {
-                current_first = female_first;
-                current_middle = female_middle;
-            } else {
-                current_first = male_first;
-                current_middle = male_middle;
-            }
-
-            if (current_first->count == 0) {
-                fprintf(stderr, "ERROR: Cannot generate name. Data missing for %c in period %d. Skipping.\n", gender, current_period_index + 1);
-                continue;
-            }
-
-            generate_and_print_name(current_first, current_middle, &last_names_simple, surname_override, middle_name_chance, max_middle_names, no_last_name, output_buffer);
-            printf("%s", output_buffer);
-            if (age_mode) { printf(" (Born: %d)", birth_year); }
-            printf("\n");
-        }
+// --- GENERATION LOOP ---
+for (int i = 0; i < count; i++) {
+    int current_period_index;
+    if (random_period) {
+        current_period_index = rand() % MAX_PERIODS;
+    } else {
+        current_period_index = period_num - 1;
     }
 
+    // Tarkista, onko datalistat tyhjiä ennen generointia (KANNATTAA JÄTTÄÄ, VAIKKA LATAUS ONNISTUIKIN)
+    if (first_names.periods[current_period_index].count == 0 ||
+        female_first_names.periods[current_period_index].count == 0)
+    {
+        fprintf(stderr, "ERROR: Name data missing for period %d. Skipping generation.\n", current_period_index + 1);
+        continue;
+    }
 
-    // --- PUHDISTUS ---
-    cleanup_and_exit:
+    int birth_year = 0;
+    if (age_mode) {
+        int decade_start = 1860 + (current_period_index * 10);
+        birth_year = decade_start + (rand() % 10);
+    }
+
+    // HUOM: Sukunimi valitaan ennen generointia
+    const char *family_surname = NULL;
+    if (surname_override != NULL) {
+        family_surname = surname_override;
+    } else if (last_names.count > 0 && !no_last_name) {
+        // KORJATTU SUKUNIMEN VALINTA SimpleNameListille
+        family_surname = last_names.names[rand() % last_names.count].name;
+    }
+
+    // --- KORJATTU GENERATION LOGIIKKA: Käsittelee kaikki kolme tapausta (F, P, Single) ---
+    if (family_mode) {
+        // **PERHETILA (Family Mode)** - Toimii jo
+
+        int current_num_kids = num_kids;
+        if (random_kids_mode) {
+            current_num_kids = 1 + (rand() % 5);
+        }
+
+        printf("--- Family %d (Period %d) ---\n", i + 1, current_period_index + 1);
+
+        // 1. Isä (Male Parent)
+        printf("Father: ");
+        generate_and_print_name(current_period_index, 'M', max_middle_names, middle_name_chance, family_surname, age_mode, 1 /*family_mode*/, 1 /*parent_mode*/);
+
+        // 2. Äiti (Female Parent)
+        printf("Mother: ");
+        generate_and_print_name(current_period_index, 'F', max_middle_names, middle_name_chance, family_surname, age_mode, 1 /*family_mode*/, 1 /*parent_mode*/);
+
+        // 3. Lapset (Kids)
+        for (int k = 0; k < current_num_kids; k++) {
+            char kid_gender = (rand() % 2 == 0) ? 'M' : 'F';
+
+            // HUOM: Lapsen syntymävuosi vaatii ikälipun
+            int kid_age_mode = (age_mode || (argc > 1)); // Jos joku parametri annettu, oletetaan ikä tarpeelliseksi
+            int kid_birth_year = birth_year + 5 + (rand() % 11);
+
+            printf("Child %d (%c): ", k + 1, kid_gender);
+            // Vain parent_mode asettaa iäksi birth_yearin. Lapset käyttävät omaa laskettua ikäänsä.
+            generate_and_print_name(current_period_index, kid_gender, max_middle_names, middle_name_chance, family_surname, age_mode, 1 /*family_mode*/, 0 /*kid_mode*/);
+        }
+        printf("-----------------\n");
+
+    } else if (couple_mode) {
+        // **PARISKUNTATILA (Couple Mode)** - TÄMÄ PUUTTUI
+
+        printf("\n--- Couple %d (Period %d) ---\n", i + 1, current_period_index + 1);
+
+        // 1. Mies
+        printf("Male: ");
+        generate_and_print_name(current_period_index, 'M', max_middle_names, middle_name_chance, family_surname, age_mode, 0, 0);
+
+        // 2. Nainen
+        printf("Female: ");
+        generate_and_print_name(current_period_index, 'F', max_middle_names, middle_name_chance, family_surname, age_mode, 0, 0);
+        printf("\n");
+
+    } else {
+        // **YKSITTÄISNIMI (Single Name)** - TÄMÄ PUUTTUI
+
+        generate_and_print_name(current_period_index, gender, max_middle_names, middle_name_chance, family_surname, age_mode, 0, 0);
+    }
+
+} // --- GENERATION LOOP LOPPUU ---
+
+// --- PUHDISTUS ---
+cleanup_and_exit:
+    // HUOM: Vapauta globaalit muuttujat, joita käytettiin ladattaessa!
+    // Varmista, että nämä vastaavat TIETORAKENNETYYPEJÄSI.
+    // Tässä oletetaan, että 'free_decade_data' vapauttaa 'MultiPeriodNames'
+    // ja 'free_names' vapauttaa 'SimpleNameList'.
+
     free_decade_data(&first_names);
     free_decade_data(&middle_names);
     free_decade_data(&female_first_names);
     free_decade_data(&female_middle_names);
-    free_names(&last_names_simple);
-    free_config_paths();
+    free_names(&last_names); // Käytä globaalia last_names
+    // free_config_paths();
     return 0;
 }
