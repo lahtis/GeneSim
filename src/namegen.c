@@ -457,7 +457,7 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         interactive_mode = 0;
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) { print_help(); goto cleanup_and_exit; }
-        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) { printf("Name Source Generator v0.4.16 Name List Optimized\n"); goto cleanup_and_exit; }
+        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) { printf("Name Source Generator v0.3.0 Name List Optimized\n"); goto cleanup_and_exit; }
 
         else if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--period") == 0) { if (i + 1 < argc) period_num = atoi(argv[++i]); }
         else if (strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--count") == 0) { if (i + 1 < argc) count = atoi(argv[++i]); }
