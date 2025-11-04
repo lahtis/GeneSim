@@ -5,7 +5,7 @@ The purpose of this program is to facilitate the development of story-based game
 <h1>Namegen – Historical Name Generator</h1>
 Namegen is a command-line based application designed to generate authentic Finnish names from specific historical periods.
 
-Finnish Name Generator: Forge Authentic Historical Narratives! (v0.2.1)
+Finnish Name Generator: Forge Authentic Historical Narratives! (v0.4.17)
 Stop using generic placeholder names. This tool is the ultimate solution for Game Developers, TTRPG creators, and narrative designers who need historically accurate, culturally authentic, and uniquely structured Finnish names from the late 19th and early 20th centuries.
 
 ✨ New: Couple Generation & Name Complexity! 
@@ -34,5 +34,5 @@ This is more than a name generator; it's a character asset creation tool enginee
 <h2>Technical Specifications</h2>
 <li>Language: Pure C.</li>
 <li>Compatibility: Designed to work on both Windows and Linux environments (using #ifdef constructs).</li>
-<li>Version: 0.2.1 (Development stage).</li>
+<li>Version: 0.4.17 (Development stage).</li>
 <li>Data is based on https://www.tuomas.salste.net/suku/kela-etunimet.html#M1 research. There are a lot of ready-made names.</li>
