@@ -1,2 +1,0 @@
-English and Finnish Documentation.
-
