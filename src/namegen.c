@@ -1,11 +1,11 @@
 /**
 * @file namegen.c
-* @brief NameGen simple name generator program.
+* @brief NameGen a comprehensive lineage and family relationship simulator.
 
 namegen - A comprehensive lineage and family relationship simulator.
-Developed with GTK3 and C.
+Developed pure C.
 
-Copyright (C) 2025 Tuomas Lähteenmäki
+Copyright (C) 2025 Tuomas Lähteenmäki lahtis@gmail.com
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -25,10 +25,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 // Versio: MAJOR.MINOR.PATCH
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 4
-#define VERSION_PATCH 17 //
+#define VERSION_PATCH 18 //
 
 // Luodaan versionumerosta merkkijono tulostusta varten
-#define VERSION_STRING "0.4.17"
+#define VERSION (VERSION_MAJOR * 10000 + VERSION_MINOR * 100 + VERSION_PATCH)
+
+// Yhdistäminen versionumero tulostusmerkkijonoksi
+#define STR(x) #x
+#define XSTR(x) STR(x)
+#define VERSION_STRING XSTR(VERSION_MAJOR) "." XSTR(VERSION_MINOR) "." XSTR(VERSION_PATCH)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -389,7 +394,7 @@ void generate_and_print_name(int period_index, char gender, int max_middle_names
 
 void print_help() {
     // KORJATTU v.0.4.17: Poistettu tuntemattomat muuttujat (data, filename) ja goto
-    printf("NameGen (v.0.4.17)\n");
+    printf("NameGen (v.%s)\n", VERSION_STRING);
     printf("\n");
     printf("Usage: namegen.exe [-h] [-v] [-p <Number>] [-g <M/F>] [-n <count>] ...\n");
     printf("\n");
@@ -453,8 +458,7 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         interactive_mode = 0;
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) { print_help(); goto cleanup_and_exit; }
-        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) { printf("Namegen v.0.4.17\n"); goto cleanup_and_exit; }
-
+        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) { printf("Namegen v.%s\n", VERSION_STRING); goto cleanup_and_exit; }
         else if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--period") == 0) { if (i + 1 < argc) period_num = atoi(argv[++i]); }
         else if (strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--count") == 0) { if (i + 1 < argc) count = atoi(argv[++i]); }
         else if (strcmp(argv[i], "-g") == 0 || strcmp(argv[i], "--gender") == 0) { if (i + 1 < argc) gender = toupper(argv[++i][0]); }
@@ -486,7 +490,7 @@ int main(int argc, char *argv[]) {
         int choice;
         printf("--- Interactive Name Generation ---\n");
 
-        printf("Select period (1=1860s - 7=1920s, 0=Random): ");
+        printf("Select period (1=1860–69 2=1870–79 3=1880–89 4=1890–99 5=1900–09 6=1910–19 7=1920–29, 0=Random): ");
         if (scanf("%d", &period_num) != 1) { period_num = 0; }
         clear_input_buffer();
         // ... (Interaktiivinen logiikka jatkuu)
