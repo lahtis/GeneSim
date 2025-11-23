@@ -1,0 +1,16 @@
+# Miesnimet
+firstMDataPaths=data/FI-fi/Finnish-men-first-names.csv
+secondMDataPaths=data/FI-fi/Finnish-men-seconds-names.csv
+
+# Naisnimet
+firstFDataPaths=data/FI-fi/Finnish-women-first-names.csv
+secondFDataPaths=data/FI-fi/Finnish-women-middle-names.csv
+
+# Sukunimet
+lastDataPaths=data/FI-fi/Finnish-last-names.csv
+
+# Yleiset asetukset
+output-file=output.txt
+format=text
+count=10
+verbose=1

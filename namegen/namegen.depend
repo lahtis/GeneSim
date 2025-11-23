@@ -1,0 +1,103 @@
+# depslib dependency file v1.0
+1763474980 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\args.c
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	"args.h"
+	"version.h"
+
+1763487751 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\generator.c
+	<stdio.h>
+	<stdlib.h>
+	"args.h"
+	"generator.h"
+	<stdlib.h>
+	<time.h>
+
+1763494650 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\output.c
+	"output.h"
+	<stdio.h>
+	<string.h>
+
+1763475332 c:\users\lahti\desktop\namegen-projekti\namegen\include\args.h
+
+1763492125 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\main.c
+	"loader.h"
+	"generator.h"
+	"output.h"
+	<stdlib.h>
+	<time.h>
+
+1763487704 c:\users\lahti\desktop\namegen-projekti\namegen\include\generator.h
+	"loader.h"
+
+1763495049 c:\users\lahti\desktop\namegen-projekti\namegen\include\output.h
+	"loader.h"
+	<stdio.h>
+
+1763400270 c:\users\lahti\desktop\namegen-projekti\namegen\include\version.h
+
+1763473265 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\config.c
+	<stdio.h>
+	<string.h>
+	"config.h"
+
+1763491846 c:\users\lahti\desktop\namegen-projekti\namegen\include\config.h
+
+1763490422 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\csv_reader.c
+	"args.h"
+	<string.h>
+	<stdlib.h>
+	<stdio.h>
+	"csv_reader.h"
+	"debug.h"
+	"normalize.h"
+
+1763470729 c:\users\lahti\desktop\namegen-projekti\namegen\include\csv_reader.h
+	"args.h"
+
+1763490439 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\name_data.c
+	"name_data.h"
+	"csv_reader.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"debug.h"
+	"normalize.h"
+
+1763473547 c:\users\lahti\desktop\namegen-projekti\namegen\include\name_data.h
+	"config.h"
+	"args.h"
+
+1763480023 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\debug.c
+	<stdio.h>
+	"debug.h"
+
+1763479992 c:\users\lahti\desktop\namegen-projekti\namegen\include\debug.h
+
+1763480993 c:\users\lahti\desktop\namegen-projekti\namegen\include\normalize.h
+
+1763481021 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\normalize.c
+	<string.h>
+	"normalize.h"
+
+1763482069 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\split_names.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	"split_names.h"
+
+1763482030 c:\users\lahti\desktop\namegen-projekti\namegen\include\split_names.h
+
+1763485584 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\names.c
+	<stdlib.h>
+
+1763492476 c:\users\lahti\desktop\namegen-projekti\namegen\include\loader.h
+
+1763493226 source:c:\users\lahti\desktop\namegen-projekti\namegen\src\loader.c
+	"loader.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
