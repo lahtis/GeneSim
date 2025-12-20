@@ -2,43 +2,33 @@
 #include <stdio.h>
 #include <string.h>
 
-void print_name(const char *format,
-                const Name *first,
-                const Name *second,
-                const Name *last,
-                int verbose) {
-    if (strcmp(format, "text") == 0) {
-        printf("%s %s %s\n", first->first, second->second, last->last);
-    } else if (strcmp(format, "csv") == 0) {
-        printf("%s,%s,%s\n", first->first, second->second, last->last);
+// Helper function that handles the actual writing to any stream
+void write_formatted_name(FILE *fp, const char *format, const Name *f, const Name *s, const Name *l) {
+    if (strcmp(format, "csv") == 0) {
+        fprintf(fp, "%s,%s,%s\n", f->first, s->second, l->last);
     } else if (strcmp(format, "json") == 0) {
-        printf("{\"first\":\"%s\",\"second\":\"%s\",\"last\":\"%s\"}\n",
-               first->first, second->second, last->last);
-    }
-
-    if (verbose) {
-        fprintf(stderr, "Printed name: %s %s %s\n",
-                first->first, second->second, last->last);
+        fprintf(fp, "{\"first\":\"%s\",\"second\":\"%s\",\"last\":\"%s\"}\n",
+                f->first, s->second, l->last);
+    } else {
+        // default "text"
+        fprintf(fp, "%s %s %s\n", f->first, s->second, l->last);
     }
 }
 
-void print_file(FILE *fp,
-                const char *format,
-                const Name *first,
-                const Name *second,
-                const Name *last,
-                int verbose) {
-    if (strcmp(format, "text") == 0) {
-        fprintf(fp, "%s %s %s\n", first->first, second->second, last->last);
-    } else if (strcmp(format, "csv") == 0) {
-        fprintf(fp, "%s,%s,%s\n", first->first, second->second, last->last);
-    } else if (strcmp(format, "json") == 0) {
-        fprintf(fp, "{\"first\":\"%s\",\"second\":\"%s\",\"last\":\"%s\"}\n",
-                first->first, second->second, last->last);
-    }
+void print_name(const char *format, const Name *first, const Name *second, const Name *last, int verbose) {
+    write_formatted_name(stdout, format, first, second, last);
 
     if (verbose) {
-        fprintf(stderr, "Printed name to file: %s %s %s\n",
-                first->first, second->second, last->last);
+        fprintf(stderr, "[DEBUG] Printed to stdout in format: %s\n", format);
+    }
+}
+
+void print_file(FILE *fp, const char *format, const Name *first, const Name *second, const Name *last, int verbose) {
+    if (fp == NULL) return;
+
+    write_formatted_name(fp, format, first, second, last);
+
+    if (verbose) {
+        fprintf(stderr, "[DEBUG] Printed to file in format: %s\n", format);
     }
 }
