@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
     // 4. Let's go through the arguments that override the config
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-count") == 0 && i+1 < argc) {
+        if (strcmp(argv[i], "--count") == 0 && i+1 < argc) {
             count = atoi(argv[++i]);
        } else if (strcmp(argv[i], "--output-file") == 0 && i+1 < argc) {
         final_outfile = argv[++i];   // save the filename to a variable
@@ -96,3 +96,4 @@ int main(int argc, char *argv[]) {
     free_config(cfg);
     return 0;
 }
+
