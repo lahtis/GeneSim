@@ -44,6 +44,9 @@ The example selects season 3 and randomly generates 3 names, printing them on th
 
  `namegen.exe --pediod 3 --count 3 -format json --output-file test.json`
 
+The example selects season 3 (--pediod 3) and randomly generates 4 names, printing them on the screen in CSV format, and also saves them to a file named output
+
+ `namegen.exe --pediod 3 --count 4 -format csv`
 
 ## File structure
 
