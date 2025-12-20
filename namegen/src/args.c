@@ -6,13 +6,14 @@
 
 void print_help(void) {
     printf("Usage: namegen [options]\n");
-    printf("  --help       Show this help\n");
-    printf("  --version    Show version\n");
-    printf("  --period N   Select period (1–7, 0=random)\n");
-    printf("  --couple     Generate couples\n");
-    printf("  --family     Generate families\n");
-    printf("  --count N    Number of entries\n");
-    printf("  --output MODE  plain, csv, json\n");
+    printf("\n");
+    printf("  --period <number>     Select period (1–7, 0=random)\n");
+    printf("  --couple              Generate couples\n");
+    printf("  --family              Generate families\n");
+    printf("  --count <number>      Number of entries\n");
+    printf("  --output <mode>       plain, csv, json\n");
+    printf("  --help                Show this help\n");
+    printf("  --version             Show version\n");
 }
 
 void print_version(void) {
