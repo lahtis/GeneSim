@@ -13,32 +13,26 @@ int main(int argc, char *argv[]) {
     Args args;
     parse_args(argc, argv, &args);
 
-    Config *cfg = load_config("config.txt");
-    if (!cfg) return 1;
-
-    // Oletusarvot configista
-    int count   = cfg->count;
-    char *format= cfg->format;
-    int verbose = cfg->verbose;
-    char *outfile = NULL;
-
-    // Ladataan kaikki nimilistat
-    int menFirstCount, menSecondCount, womenFirstCount, womenSecondCount, lastCount;
-    Name *menFirst   = load_names(cfg->firstMDataPaths, &menFirstCount);
-    Name *menSecond  = load_names(cfg->secondMDataPaths, &menSecondCount);
-    Name *womenFirst = load_names(cfg->firstFDataPaths, &womenFirstCount);
-    Name *womenSecond= load_names(cfg->secondFDataPaths, &womenSecondCount);
-    Name *lastNames  = load_names(cfg->lastDataPaths, &lastCount);
-
+    // 1. Check help/version right at the start
     if (args.help) { print_help(); return 0; }
     if (args.version) { print_version(); return 0; }
 
-    // Käydään komentoriviargumentit läpi
+    // 2. Load the settings
+    Config *cfg = load_config("config.txt");
+    if (!cfg) return 1;
+
+    // 3. Set default values from config
+    int count           = cfg->count;
+    char *format        = cfg->format;
+    int verbose         = cfg->verbose;
+    char *final_outfile = cfg->output_file;
+
+    // 4. Let's go through the arguments that override the config
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-count") == 0 && i+1 < argc) {
             count = atoi(argv[++i]);
        } else if (strcmp(argv[i], "--output-file") == 0 && i+1 < argc) {
-        outfile = argv[++i];   // tallennetaan tiedostonimi muuttujaan
+        final_outfile = argv[++i];   // save the filename to a variable
         } else if (strcmp(argv[i], "-format") == 0 && i+1 < argc) {
             format = argv[++i];
         } else if (strcmp(argv[i], "-verbose") == 0) {
@@ -53,45 +47,52 @@ int main(int argc, char *argv[]) {
 
     }
 
-    srand((unsigned)time(NULL));
-
-    // Esimerkki: tulostetaan vain count ja format
-    fprintf(stderr, "Generating %d names in format %s (verbose=%d)\n",
-            count, format, verbose);
+    // 5. Loading data (at this stage only dynamic memory is used)
+    int m1C, m2C, w1C, w2C, lastC;
+    Name *menFirst    = load_names(cfg->firstMDataPaths, &m1C);
+    Name *menSecond   = load_names(cfg->secondMDataPaths, &m2C);
+    Name *womenFirst  = load_names(cfg->firstFDataPaths, &w1C);
+    Name *womenSecond = load_names(cfg->secondFDataPaths, &w2C);
+    Name *lastNames   = load_names(cfg->lastDataPaths, &lastC);
 
     if (!menFirst || !menSecond || !womenFirst || !womenSecond || !lastNames) {
         fprintf(stderr, "Error loading name data files.\n");
+        // Muista vapauttaa ne jotka ehdittiin ladata
         return 1;
     }
 
     srand((unsigned)time(NULL));
 
+    // 6. Opening the file
     FILE *fp = stdout;
-if (cfg->output_file && strlen(cfg->output_file) > 0) {
-    fp = fopen(cfg->output_file, "w");
-    if (!fp) { perror("fopen"); return 1; }
-}
+    if (final_outfile && strlen(final_outfile) > 0) {
+        fp = fopen(final_outfile, "w");
+        if (!fp) { perror("fopen"); return 1; }
+    }
 
-    const Name *first  = &menFirst[rand() % menFirstCount];
-    const Name *second = &menSecond[rand() % menSecondCount];
-    const Name *last   = &lastNames[rand() % lastCount];
+    if (verbose) {
+        fprintf(stderr, "Generating %d names in format %s (verbose=%d))\n", count, format, verbose);
+    }
 
-for (int i = 0; i < cfg->count; i++) {
-    // valitaan nimet...
-    print_name(cfg->format, first, second, last, cfg->verbose);   // ruudulle
-    print_file(fp, cfg->format, first, second, last, cfg->verbose); // tiedostoon
-}
+    // 7. Name generation - RANDOM SELECTION INSIDE LOOP
+    for (int i = 0; i < count; i++) {
+        // Here you can add logic for selecting gender (e.g., rand() % 2)
+        const Name *first = &menFirst[rand() % m1C];
+        const Name *second = &menSecond[rand() % m2C];
+        const Name *last = &lastNames[rand() % lastC];
 
-if (fp != stdout) fclose(fp);
 
-    // Vapautukset
-    free_names(menFirst, menFirstCount);
-    free_names(menSecond, menSecondCount);
-    free_names(womenFirst, womenFirstCount);
-    free_names(womenSecond, womenSecondCount);
-    free_names(lastNames, lastCount);
-    free_config(cfg);
+        print_name(format, first, second, last, cfg->verbose);   // print in screen
+        print_file(fp, format, first, second, last, cfg->verbose); // print in file
+    }
 
+    // 8. Final cleaning
+    if (fp != stdout) fclose(fp);
+    free_names(menFirst, m1C);
+    free_names(menSecond, m2C);
+    free_names(womenFirst, w1C);
+    free_names(womenSecond, w2C);
+    free_names(lastNames, lastC);
     free_config(cfg);
     return 0;
 }
