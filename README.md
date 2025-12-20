@@ -2,9 +2,11 @@
 The purpose of this program is to facilitate the development of story-based game designs.
 * genesim - A comprehensive kinship and family relationship simulator. (in development)
 * namegen - NameGen a comprehensive lineage and family relationship simulator. (in development)
+* namegen - NameGen (demo) a comprehensive lineage and family relationship simulator demo. (released)
 
-<h1>Namegen – Historical Name Generator</h1>
+<h1>Namegen – Historical Name Generator - DEMO</h1>
 Namegen is a command-line based application designed to generate authentic Finnish names from specific historical periods.
+* working demo versio 0.4.18 found releases namegen (demo).
 
 Stop using generic placeholder names. This tool is the ultimate solution for Game Developers, TTRPG creators, and narrative designers who need historically accurate, culturally authentic, and uniquely structured Finnish names from the late 19th and early 20th centuries.
 
