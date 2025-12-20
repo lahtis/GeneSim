@@ -26,13 +26,16 @@ int main(int argc, char *argv[]) {
     char *format        = cfg->format;
     int verbose         = cfg->verbose;
     char *final_outfile = cfg->output_file;
+    int period_idx      = 0;
 
     // 4. Let's go through the arguments that override the config
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--count") == 0 && i+1 < argc) {
+        if (strcmp(argv[i], "--period") == 0 && i + 1 < argc) {
+            period_idx = atoi(argv[++i]) - 1;
+       } else if (strcmp(argv[i], "--count") == 0 && i+1 < argc) {
             count = atoi(argv[++i]);
        } else if (strcmp(argv[i], "--output-file") == 0 && i+1 < argc) {
-        final_outfile = argv[++i];   // save the filename to a variable
+            final_outfile = argv[++i];   // save the filename to a variable
         } else if (strcmp(argv[i], "-format") == 0 && i+1 < argc) {
             format = argv[++i];
         } else if (strcmp(argv[i], "-verbose") == 0) {
@@ -47,17 +50,18 @@ int main(int argc, char *argv[]) {
 
     }
 
+    if (period_idx < 0 || period_idx > 6) period_idx = 0;
+
     // 5. Loading data (at this stage only dynamic memory is used)
     int m1C, m2C, w1C, w2C, lastC;
-    Name *menFirst    = load_names(cfg->firstMDataPaths, &m1C);
-    Name *menSecond   = load_names(cfg->secondMDataPaths, &m2C);
-    Name *womenFirst  = load_names(cfg->firstFDataPaths, &w1C);
-    Name *womenSecond = load_names(cfg->secondFDataPaths, &w2C);
-    Name *lastNames   = load_names(cfg->lastDataPaths, &lastC);
+    Name *menFirst    = load_names(cfg->firstMDataPaths, period_idx, &m1C);
+    Name *menSecond   = load_names(cfg->secondMDataPaths, period_idx, &m2C);
+    Name *womenFirst  = load_names(cfg->firstFDataPaths, period_idx, &w1C);
+    Name *womenSecond = load_names(cfg->secondFDataPaths, period_idx, &w2C);
+    Name *lastNames   = load_names(cfg->lastDataPaths, 0, &lastC);
 
     if (!menFirst || !menSecond || !womenFirst || !womenSecond || !lastNames) {
-        fprintf(stderr, "Error loading name data files.\n");
-        // Muista vapauttaa ne jotka ehdittiin ladata
+        fprintf(stderr, "Error: Missing data for period %d\n", period_idx + 1);
         return 1;
     }
 
@@ -71,7 +75,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (verbose) {
-        fprintf(stderr, "Generating %d names in format %s (verbose=%d))\n", count, format, verbose);
+        fprintf(stderr, "Generating %d names in format %s from period index %d (verbose=%d))\n", count, format, period_idx, verbose);
     }
 
     // 7. Name generation - RANDOM SELECTION INSIDE LOOP
@@ -96,4 +100,3 @@ int main(int argc, char *argv[]) {
     free_config(cfg);
     return 0;
 }
-
