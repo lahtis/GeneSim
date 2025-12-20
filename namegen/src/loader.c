@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 Config *load_config(const char *filename) {
     FILE *fp = fopen(filename, "r");
@@ -30,7 +31,7 @@ Config *load_config(const char *filename) {
     }
     fclose(fp);
 
-    // Tarkistus: vähintään sukunimipolku oltava
+    // Check: at least a last name path must be present
     if (!cfg->lastDataPaths) {
         fprintf(stderr, "Config missing lastDataPaths!\n");
         free_config(cfg);
@@ -53,58 +54,41 @@ void free_config(Config *cfg) {
 }
 
 Name *load_names(const char *filename, int *count) {
-    if (!filename) {
-        fprintf(stderr, "No input file specified!\n");
-        return NULL;
-    }
+    if (!filename) return NULL;
     FILE *fp = fopen(filename, "r");
-    if (!fp) {
-        perror("fopen");
-        return NULL;
-    }
+    if (!fp) { perror("fopen"); return NULL; }
 
     int capacity = 16;
     *count = 0;
-    int skipped = 0;
     Name *names = malloc(capacity * sizeof(Name));
     char line[256];
 
     while (fgets(line, sizeof(line), fp)) {
-        // Pilkotaan rivin osat
-        char *first  = strtok(line, ",");
-        char *second = strtok(NULL, ",");
-        char *last   = strtok(NULL, ",\n");
+        // 1. Clean up the newline and spaces at the end
+        line[strcspn(line, "\r\n")] = 0;
 
-        // Jos rivillä ei ole edes yhtä nimeä → ohitetaan
-        if (!first || strlen(first) == 0) {
-            skipped++;
+        // 2. Skip empty lines or lines that start with a number (such as 1870-29)
+        if (strlen(line) == 0 || isdigit(line[0])) {
             continue;
         }
 
+        // 3. Take only the first word (if there's other junk on the line after the comma)
+        char *token = strtok(line, ",");
+        if (!token) continue;
+
         if (*count >= capacity) {
             capacity *= 2;
-            Name *tmp = realloc(names, capacity * sizeof(Name));
-            if (!tmp) {
-                perror("realloc");
-                free(names);
-                fclose(fp);
-                return NULL;
-            }
-            names = tmp;
+            names = realloc(names, capacity * sizeof(Name));
         }
 
-        // Täytetään puuttuvat kentät tyhjällä merkkijonolla
-        names[*count].first  = strdup(first);
-        names[*count].second = (second && strlen(second) > 0) ? strdup(second) : strdup("");
-        names[*count].last   = (last   && strlen(last)   > 0) ? strdup(last)   : strdup("");
+        // 4. Save the name in all fields to be on the safe side
+        names[*count].first  = strdup(token);
+        names[*count].second = strdup(token);
+        names[*count].last   = strdup(token);
+
         (*count)++;
     }
     fclose(fp);
-
-    if (skipped > 0) {
-        fprintf(stderr, "Skipped %d invalid rows in %s\n", skipped, filename);
-    }
-
     return names;
 }
 
