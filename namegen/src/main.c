@@ -5,7 +5,7 @@
 namegen - A comprehensive lineage and family relationship simulator.
 Developed pure C.
 
-Copyright (C) 2025 Tuomas L√§hteenm√§ki lahtis[@gmail.com]
+Copyright (C) 2025 Tuomas L‰hteenm‰ki lahtis@gmail.com
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -26,76 +26,157 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #include <stdlib.h>
 #include <time.h>
 #include <locale.h>
+#include <string.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
+#include "config.h"
 #include "args.h"
 #include "loader.h"
 #include "generator.h"
 
+void print_ohjesaanto(const void *cfg_ptr, const Args *args) {
+    const Config *cfg = (const Config *)cfg_ptr;
+    if (!cfg || !cfg->firstMDataPaths) return;
+
+    char path[512];
+    strncpy(path, cfg->firstMDataPaths, sizeof(path) - 1);
+    path[sizeof(path) - 1] = '\0'; // Varmistetaan nollap‰‰te
+
+    // M‰‰ritell‰‰n last_slash t‰ss‰!
+    char *last_slash = strrchr(path, '/');
+    if (!last_slash) last_slash = strrchr(path, '\\');
+
+    if (!last_slash) {
+        printf("[!] Polkuvirhe ohjesaantoa etsiessa.\n");
+        return;
+    }
+
+    FILE *f = NULL;
+    const char *target_file = (args->lang_en) ? "GUIDELINES.txt" : "OHJESAANTO.txt";
+
+    // Asetetaan valittu tiedosto polkuun
+    strcpy(last_slash + 1, target_file);
+    f = fopen(path, "r");
+
+    // Fallback: Jos valittua kielt‰ ei ole, kokeillaan toista
+    if (f == NULL) {
+        const char *alt_file = (args->lang_en) ? "OHJESAANTO.txt" : "GUIDELINES.txt";
+        strcpy(last_slash + 1, alt_file);
+        f = fopen(path, "r");
+        if (f) target_file = alt_file;
+    }
+
+    if (f == NULL) {
+        printf("\n[!] Error: Documentation not found (%s).\n", target_file);
+        return;
+    }
+
+    printf("\n==================================================\n");
+    printf("           DOCUMENTATION / OHJESAANTO           \n");
+    printf("           Language: %-26s \n", (strstr(target_file, "GUIDE") ? "English" : "Finnish"));
+    printf("==================================================\n");
+
+    char line[256];
+    while (fgets(line, sizeof(line), f)) {
+        char *p = line;
+        while (*p && (unsigned char)*p <= 32) p++;
+        if (*p == '\0' || *p == '#') continue;
+        printf(" %s", p);
+    }
+    printf("\n==================================================\n\n");
+
+    fclose(f);
+}
+
 int main(int argc, char *argv[]) {
+    // 1. WINDOWS & UTF-8 TUKI
+    // T‰m‰ varmistaa, ett‰ skandit (‰, ˆ) n‰kyv‰t oikein komentorivill‰
     #ifdef _WIN32
-    SetConsoleOutputCP(65001); // UTF-8
+    SetConsoleOutputCP(65001);
     SetConsoleCP(65001);
     #endif
 
     setlocale(LC_ALL, "fi_FI.UTF-8");
-    Args args;
 
-    // 1. Parsitaan komentoriviparametrit
+    Args args;
+    // Alustetaan args oletusarvoilla (est‰‰ satunnaiset luvut muistissa)
+    memset(&args, 0, sizeof(Args));
+    args.count = 1; // Oletuksena yksi nimi
+
+    // 2. PARSE ARGS
     parse_args(argc, argv, &args);
 
-    // 2. Asetetaan seed
-    if (args.seed != 0) {
-        srand((unsigned int)args.seed); // K√§ytet√§√§n k√§ytt√§j√§n antamaa lukua
-        if (args.verbose) {
-            fprintf(stderr, "INFO: Seed set to %u\n", (unsigned int)args.seed);
-        }
-    } else {
-        srand((unsigned int)time(NULL)); // Jos seedi√§ ei annettu (0), k√§ytet√§√§n kelloa
-    }
-
-    // T√ÑM√Ñ PUUTTUU: Tarkistetaan pit√§√§k√∂ n√§ytt√§√§ help tai versio
+    // Help ja Version tarkistukset
     if (args.help) {
         print_help();
-        return 0; // Lopetetaan ohjelma t√§h√§n
+        return 0;
     }
-
     if (args.version) {
         print_version();
-        return 0; // Lopetetaan ohjelma t√§h√§n
+        return 0;
     }
-    // 2. Ladataan konfiguraatio (HUOM: palauttaa Config-pointterin)
+
+    // 3. SEED (SATUNNAISUUS)
+    if (args.seed != 0) {
+        srand((unsigned int)args.seed);
+        if (args.verbose) {
+            fprintf(stderr, "[INFO] Seed set to: %u\n", (unsigned int)args.seed);
+        }
+    } else {
+        srand((unsigned int)time(NULL));
+    }
+
+    // 4. KONFIGURAATION LATAUS
+    // Varmista ett‰ tiedosto on olemassa (config.txt tai config.json)
     Config *cfg = load_config("config.txt");
     if (!cfg) {
-        fprintf(stderr, "Error: The configuration file could not be loaded.\n");
+        fprintf(stderr, "ERROR: Configuration file 'config.txt' not found.\n");
         return 1;
     }
 
-    // 3. Periodi-logiikka (tarkistetaan ja arvotaan tarvittaessa)
-    if (args.period <= 0 || args.period > 7) {
-        args.period = (rand() % 7) + 1;
+    if (args.list_periods) {
+        print_ohjesaanto(cfg, &args);
+        free_config(cfg);
+        return 0; // Lopetetaan t‰h‰n, kuten "ohjes‰‰ntˆ" vaatii
     }
-    // Indeksi on 0-6 tiedostoissasi
-    int period_idx = args.period - 1;
 
-    // 4. Ladataan kaikki nimitiedostot (K√§ytet√§√§n load_all_data_with_config)
+    // 5. PERIODI-LOGIIKKA JA VALIDIOINTI
+    if (args.period <= 0) {
+    args.period = (rand() % 7) + 1; // Arvotaan sarake 1-7 v‰lilt‰
+    }
+
+    // Tarkistetaan vain, ett‰ tiedosto on olemassa (ei kansioita)
+    if (cfg->firstMDataPaths) {
+        FILE *test_f = fopen(cfg->firstMDataPaths, "r");
+        if (test_f == NULL) {
+            printf("\n[HUOMIO] Nimitiedostoa ei loytynyt: %s\n", cfg->firstMDataPaths);
+            return 1; // Kriittinen virhe, jos tiedostoa ei ole
+        } else {
+            fclose(test_f);
+            if (args.verbose) printf("[INFO] Kaytetaan saraketta (period): %d\n", args.period);
+        }
+    }
+
+    int period_idx = args.period; // K‰ytet‰‰n suoraan numerona, koska koodisi vertaa current_col == target_period
+
+    // 6. DATAN LATAUS
     NameData *data = load_all_data_with_config(cfg, period_idx, args.verbose);
     if (!data) {
-        fprintf(stderr, "FATAL: Could not load name data.\n");
+        fprintf(stderr, "FATAL: Loading name data failed.\n");
         free_config(cfg);
         return 1;
     }
 
     if (args.verbose) {
-    printf("INFO: Data loaded successfully.\n");
-    printf("INFO: Men names: %d, Women names: %d, Surnames: %d\n\n",
-            data->m1_count, data->f1_count, data->l_count);
-}
+        fprintf(stderr, "[INFO] Data loaded for the era %d\n", args.period);
+        fprintf(stderr, "[INFO] First names (M/F): %d/%d, Last names: %d\n\n",
+                data->m1_count, data->f1_count, data->l_count);
+    }
 
-    // 5. Generointisilmukka
+    // 7. GENEROINTI
     for (int i = 0; i < args.count; i++) {
         if (args.family_mode) {
             generate_family(&args, cfg, data, stdout);
@@ -106,10 +187,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // 6. Puhdistus (K√§ytet√§√§n loader.c:n funktioita)
+    // 8. PUHDISTUS
     free_all_data(data);
     free_config(cfg);
 
     return 0;
 }
-

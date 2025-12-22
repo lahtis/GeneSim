@@ -4,162 +4,157 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Apufunktio satunnaisen nimen hakuun
+// --- APUFUNKTIOT (Internal helpers) ---
+
 static Name* get_rand(Name *list, int count) {
     if (!list || count <= 0) return NULL;
     return &list[rand() % count];
 }
 
-// Historiallinen todenn‰kˆisyys kakkosnimelle
 int calculate_middle_chance(int period, int user_chance) {
-    if (user_chance > 0) return user_chance;
+    if (user_chance >= 0) return user_chance;
     if (period <= 0) period = 4;
     return 15 + (period * 11);
 }
 
-void generate_single(const Args *args, const Config *cfg, NameData *data, FILE *out) {
-    Name *f_name = NULL, *s_name = NULL, *l_name = NULL;
+// Ker‰‰ keskinimet yhteen puskuriin
+static void build_middle_names(char *dest, int max_count, int chance, Name *list, int list_count, const char *first_name) {
+    dest[0] = '\0';
+    if (!list || list_count <= 0) return;
+    for (int i = 0; i < max_count; i++) {
+        if ((rand() % 100) < chance) {
+            Name *tmp = get_rand(list, list_count);
+            // Tarkistetaan ettei nimi ole sama kuin etunimi (first_name) tai jo lis‰tty puskuriin
+            if (tmp && tmp->first && strcmp(tmp->first, first_name) != 0 && !strstr(dest, tmp->first)) {
+                if (dest[0] != '\0') strcat(dest, " ");
+                strcat(dest, tmp->first);
+            }
+        }
+    }
+}
 
-    int gender = args->gender;
-    if (gender == RANDOM_GENDER) gender = (rand() % 2 == 0) ? MALE : FEMALE;
-
+// Tyˆjuhta: Valmistelee henkilˆn etu- ja keskinimet puskureihin
+static void prepare_person(const Args *args, NameData *data, int gender,
+                          Name *f_out, Name *s_out, char *f_b, char *s_b) {
     int chance = calculate_middle_chance(args->period, args->middle_chance);
+    Name *chosen_f = (gender == MALE) ? get_rand(data->m1, data->m1_count) : get_rand(data->f1, data->f1_count);
 
-    // Arvonta (MALE / FEMALE)
-    if (gender == MALE) {
-        f_name = get_rand(data->m1, data->m1_count);
-        if ((rand() % 100) < chance) {
-            do { s_name = get_rand(data->m2, data->m2_count); } while (s_name == f_name);
-        }
+    if (chosen_f) {
+        strcpy(f_b, chosen_f->first);
+        f_out->first = f_b;
+    }
+
+    // TƒSSƒ OLI VIRHE: Nyt mukana on f_b, jotta voimme est‰‰ etunimen toistumisen
+    build_middle_names(s_b, args->max_middle_names, chance,
+                       (gender == MALE ? data->m2 : data->f2),
+                       (gender == MALE ? data->m2_count : data->f2_count),
+                       f_b);
+
+    if (s_b[0] != '\0') s_out->first = s_b;
+}
+
+// --- GENEROINTIFUNKTIOT ---
+
+void generate_single(const Args *args, const Config *cfg, NameData *data, FILE *out) {
+    Name f = {0}, s = {0}, l = {0};
+    static char f_b[64], s_b[128], l_b[64];
+    memset(f_b, 0, 64); memset(s_b, 0, 128); memset(l_b, 0, 64);
+
+    int gender = (args->gender == RANDOM_GENDER) ? rand() % 2 : args->gender;
+    prepare_person(args, data, gender, &f, &s, f_b, s_b);
+
+    if (strlen(args->forced_surname) > 0) {
+        strcpy(l_b, args->forced_surname);
+        l.first = l_b;
     } else {
-        f_name = get_rand(data->f1, data->f1_count);
-        if ((rand() % 100) < chance) {
-            do { s_name = get_rand(data->f2, data->f2_count); } while (s_name == f_name);
-        }
-    }
-    l_name = get_rand(data->l, data->l_count);
-
-    const char *mode = (args->output_mode == OUTPUT_CSV) ? "csv" :
-                       (args->output_mode == OUTPUT_JSON) ? "json" : "plain";
-
-    // KORJAUS 1: Laske vuosi suoraan t‰ss‰ (korvaa getRandomYear)
-    int year_to_pass = 0;
-    if (args->show_age) {
-        year_to_pass = 1850 + (args->period * 10) + (rand() % 10);
+        Name *ln = get_rand(data->l, data->l_count);
+        if (ln) l.first = ln->first;
     }
 
-    // KORJAUS 2: Funktio hoitaa nyt kaiken tulostuksen (nimet + i‰n + rivinvaihdon)
-    write_formatted_name_full(out, mode, f_name, s_name, l_name, NULL, year_to_pass);
+    int yr = (args->show_age) ? (1850 + (args->period * 10) + (rand() % 20)) : 0;
+    write_formatted_name_full(out, (args->output_mode == OUTPUT_CSV ? "csv" : "plain"), &f, &s, &l, NULL, yr);
 }
 
 void generate_couple(const Args *args, const Config *cfg, NameData *data, FILE *out) {
-    Name *m_f = NULL, *m_s = NULL, *m_l = NULL;
-    Name *f_f = NULL, *f_s = NULL, *f_l = NULL, *f_maiden = NULL;
+    Name m_f={0}, m_s={0}, m_l={0}, f_f={0}, f_s={0}, f_l={0}, f_maid={0};
+    static char mf_b[64], ms_b[128], ff_b[64], fs_b[128], fl_b[64], fm_b[64];
+    memset(mf_b, 0, 64); memset(ms_b, 0, 128); memset(ff_b, 0, 64);
+    memset(fs_b, 0, 128); memset(fl_b, 0, 64); memset(fm_b, 0, 64);
 
-    int chance = calculate_middle_chance(args->period, args->middle_chance);
+    // Sukunimi
+    char main_l[64];
+    if (strlen(args->forced_surname) > 0) strcpy(main_l, args->forced_surname);
+    else { Name *ln = get_rand(data->l, data->l_count); strcpy(main_l, ln ? ln->first : "Laine"); }
 
-    // M‰‰ritet‰‰n k‰ytet‰‰nkˆ yhteist‰ sukunime‰
-    int use_shared = args->shared_surname;
-    if (!args->force_manual && args->period > 4) use_shared = 1;
+    prepare_person(args, data, MALE, &m_f, &m_s, mf_b, ms_b);
+    m_l.first = main_l;
 
-    // Mies
-    m_f = get_rand(data->m1, data->m1_count);
-    if ((rand() % 100) < chance) m_s = get_rand(data->m2, data->m2_count);
-    m_l = get_rand(data->l, data->l_count);
+    prepare_person(args, data, FEMALE, &f_f, &f_s, ff_b, fs_b);
 
-    // Nainen
-    f_f = get_rand(data->f1, data->f1_count);
-    if ((rand() % 100) < chance) f_s = get_rand(data->f2, data->f2_count);
-
-    if (use_shared) {
-    f_l = m_l; // Nainen ottaa miehen sukunimen
-    if (args->maiden_name) {
-        // Arvotaan tyttˆnimi, kunnes se on eri kuin nykyinen sukunimi
-        int attempts = 0;
-        do {
-            f_maiden = get_rand(data->l, data->l_count);
-            attempts++;
-        } while (f_maiden == m_l && attempts < 10);
-        // attempts-rajoitus est‰‰ ikuisen loopin, jos listassa on vain yksi nimi
+    int use_shared = args->shared_surname || (!args->force_manual && args->period > 4);
+    if (use_shared || strlen(args->forced_surname) > 0) {
+        f_l.first = main_l;
+        if (args->maiden_name) {
+            Name *m = get_rand(data->l, data->l_count);
+            if (m) { strcpy(fm_b, m->first); f_maid.first = fm_b; }
         }
+    } else {
+        Name *ln = get_rand(data->l, data->l_count);
+        if (ln) { strcpy(fl_b, ln->first); f_l.first = fl_b; }
     }
 
-    const char *mode = (args->output_mode == OUTPUT_CSV) ? "csv" :
-                       (args->output_mode == OUTPUT_JSON) ? "json" : "plain";
+    int base = 1850 + (args->period * 10);
+    int m_yr = (args->show_age) ? base + (rand() % 15) : 0;
+    int f_yr = (args->show_age) ? m_yr + (rand() % 10 - 5) : 0;
 
-
-    int male_year = 0, female_year = 0;
-    if (args->show_age) {
-        int base = 1850 + (args->period * 10);
-        male_year = base + (rand() % 15);
-        female_year = male_year + (rand() % 5 - 2);
-    }
-
-    // Tulostetaan molemmat
-    write_formatted_name_full(out, mode, m_f, m_s, m_l, NULL, male_year);
-    write_formatted_name_full(out, mode, f_f, f_s, f_l, f_maiden, female_year);
-
-    if (args->output_mode == OUTPUT_PLAIN) fprintf(out, "\n");
+    write_formatted_name_full(out, "plain", &m_f, &m_s, &m_l, NULL, m_yr);
+    write_formatted_name_full(out, "plain", &f_f, &f_s, &f_l, &f_maid, f_yr);
 }
 
-
 void generate_family(const Args *args, const Config *cfg, NameData *data, FILE *out) {
-    if (!data || data->m1_count == 0 || data->l_count == 0) {
-        fprintf(stderr, "Error: Name data not loaded or files empty.\n");
-        return;
+    // K‰ytet‰‰n pariskuntalogiikkaa pohjana, mutta lasketaan i‰t t‰ss‰
+    Name m_f={0}, m_s={0}, m_l={0}, f_f={0}, f_s={0}, f_l={0}, f_maid={0};
+    static char mf_b[64], ms_b[128], ff_b[64], fs_b[128], fl_b[64], fm_b[64];
+    memset(mf_b, 0, 64); memset(ms_b, 0, 128); memset(ff_b, 0, 64);
+    memset(fs_b, 0, 128); memset(fl_b, 0, 64); memset(fm_b, 0, 64);
+
+    char main_l[64];
+    if (strlen(args->forced_surname) > 0) strcpy(main_l, args->forced_surname);
+    else { Name *ln = get_rand(data->l, data->l_count); strcpy(main_l, ln ? ln->first : "Laine"); }
+
+    prepare_person(args, data, MALE, &m_f, &m_s, mf_b, ms_b);
+    m_l.first = main_l;
+    prepare_person(args, data, FEMALE, &f_f, &f_s, ff_b, fs_b);
+    f_l.first = main_l; // Perheess‰ aina sama sukunimi lapsia varten
+
+    if (args->maiden_name) {
+        Name *m = get_rand(data->l, data->l_count);
+        if (m) { strcpy(fm_b, m->first); f_maid.first = fm_b; }
     }
 
-    // ... (muuttujien alustukset pysyv‰t samoina) ...
-    int chance = calculate_middle_chance(args->period, args->middle_chance);
-    int base_year = 1850 + (args->period * 10);
-    int father_birth = base_year + (rand() % 10);
-    int mother_birth = father_birth + (rand() % 5 - 2);
+    int base = 1850 + (args->period * 10);
+    int m_yr = (args->show_age) ? base + (rand() % 10) : 0;
+    int f_yr = (args->show_age) ? m_yr + (rand() % 6 - 3) : 0;
 
-    // Arvotaan nimet (kuten aiemmin)
-    Name *m_f = get_rand(data->m1, data->m1_count);
-    Name *m_s = (data->m2_count > 0 && (rand() % 100) < chance) ? get_rand(data->m2, data->m2_count) : NULL;
-    Name *m_l = get_rand(data->l, data->l_count);
+    write_formatted_name_full(out, "plain", &m_f, &m_s, &m_l, NULL, m_yr);
+    write_formatted_name_full(out, "plain", &f_f, &f_s, &f_l, &f_maid, f_yr);
 
-    Name *f_f = get_rand(data->f1, data->f1_count);
-    Name *f_s = (data->f2_count > 0 && (rand() % 100) < chance) ? get_rand(data->f2, data->f2_count) : NULL;
-    Name *f_l = m_l;
-    Name *f_maid = get_rand(data->l, data->l_count);
-    // (tyttˆnimen tarkistuslogiikka...)
-
-    const char *mode = (args->output_mode == OUTPUT_CSV) ? "csv" :
-                       (args->output_mode == OUTPUT_JSON) ? "json" : "plain";
-
-    if (args->output_mode == OUTPUT_PLAIN) fprintf(out, "--- FAMILY ---\n");
-
-    // LASKETAAN TULOSTETTAVA VUOSI (vain jos show_age on p‰‰ll‰)
-    int f_yr = (args->show_age) ? father_birth : 0;
-    int m_yr = (args->show_age) ? mother_birth : 0;
-
-    // TULOSTUS: Nyt vuosi menee funktion sis‰‰n, ei erillist‰ fprintf-kutsua!
-    write_formatted_name_full(out, mode, m_f, m_s, m_l, NULL, f_yr);
-    write_formatted_name_full(out, mode, f_f, f_s, f_l, f_maid, m_yr);
-
-    // LAPSET
+    // Lapset loogisilla vuosilla
     int children = (rand() % 4) + 1;
+    int child_yr = f_yr + 20 + (rand() % 5);
+
     for (int i = 0; i < children; i++) {
-        Name *c_f = NULL, *c_s = NULL;
-        int c_gen = (rand() % 2 == 0) ? 0 : 1;
+        Name c_f={0}, c_s={0}, c_l={0};
+        static char cfb[64], csb[128];
+        memset(cfb, 0, 64); memset(csb, 0, 128);
 
-        if (c_gen == 0) {
-            c_f = get_rand(data->m1, data->m1_count);
-            if (data->m2_count > 1 && (rand() % 100) < chance) c_s = get_rand(data->m2, data->m2_count);
-        } else {
-            c_f = get_rand(data->f1, data->f1_count);
-            if (data->f2_count > 1 && (rand() % 100) < chance) c_s = get_rand(data->f2, data->f2_count);
-        }
-
-        int child_birth = mother_birth + 20 + (i * 3) + (rand() % 5);
-        int c_yr = (args->show_age) ? child_birth : 0;
+        int c_gen = rand() % 2;
+        prepare_person(args, data, c_gen, &c_f, &c_s, cfb, csb);
+        c_l.first = main_l;
 
         if (args->output_mode == OUTPUT_PLAIN) fprintf(out, " + Child: ");
-
-        // TƒSSƒ SE MUUTOS: Lis‰tty c_yr parametriksi
-        write_formatted_name_full(out, mode, c_f, c_s, m_l, NULL, c_yr);
+        write_formatted_name_full(out, "plain", &c_f, &c_s, &c_l, NULL, (args->show_age ? child_yr : 0));
+        child_yr += (rand() % 4) + 2;
     }
     fprintf(out, "\n");
 }

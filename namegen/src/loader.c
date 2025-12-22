@@ -166,7 +166,7 @@ Name *load_names(const char *filename, int target_period, int *count, int verbos
     fclose(fp);
     // DEBUG: Tulostetaan montako nimeä oikeasti saatiin talteen
     if (verbose &&*count > 0) {
-        printf("INFO: Loaded %d names from %s\n", *count, filename);
+        printf("[INFO] Loaded %d names from %s\n", *count, filename);
     }
     return names;
 }

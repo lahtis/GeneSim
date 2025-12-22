@@ -7,8 +7,13 @@
 void print_help() {
     printf("Usage: namegen [options]\n\n");
 
-    printf("General:\n");
-    printf("  --period <1-7>            Select historical period (1: 1800s, 7: modern)\n");
+    printf("Documentation:\n");
+    printf("  --list-periods, -lp [fi|en]  Show historical eras and usage guidelines.\n");
+    printf("\nExample:\n");
+    printf("  namegen.exe -lp en\n\n");
+
+    printf("Generation:\n");
+    printf("  --period <1-7>            Select historical period (1: 1850, 7: 1920)\n");
     printf("  --count <number>          Number of names/families to generate\n");
     printf("  --seed <number>           Set random seed for reproducible results\n\n");
 
@@ -38,8 +43,20 @@ void print_help() {
 }
 
 void print_version(void) {
-    printf("namegen version %s (built %s %s)\n", VERSION_STRING, __DATE__, __TIME__);
+    printf("\n==================================================\n");
+    printf("   GENESIM NAME GENERATOR\n");
+    printf("   Version: %s \n", VERSION_STRING);
+    printf("   Build Date: %s\n",  __DATE__, __TIME__);
+    printf("   Author:  %s\n", VERSION_AUTHOR);
+    printf("   GitHub:  %s\n", VERSION_GITHUB);
+    printf("   License: %s\n", VERSION_LICENSE);
+    printf("==================================================\n");
+    printf("   Developed as part of the GeneSim project.\n");
+    printf("   - Multilingual guidelines (FI/EN) support.\n");
+    printf("   - Historical name logic for periods 1-7.\n");
+    printf("==================================================\n\n");
 }
+
 
 void parse_args(int argc, char *argv[], Args *args) {
     memset(args, 0, sizeof(Args));
@@ -54,7 +71,20 @@ void parse_args(int argc, char *argv[], Args *args) {
     args->show_age = 0;
 
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--verbose") == 0) {
+    if (strcmp(argv[i], "-lp") == 0 || strcmp(argv[i], "--list-periods") == 0) {
+            args->list_periods = 1;
+
+            // Tarkistetaan onko seuraava sana olemassa ja onko se kieli
+            if (i + 1 < argc) {
+                if (strcmp(argv[i + 1], "en") == 0) {
+                    args->lang_en = 1;
+                    i++; // Hypätään "en" yli, ettei sitä luulla muuksi komennoksi
+                } else if (strcmp(argv[i + 1], "fi") == 0) {
+                    args->lang_en = 0;
+                    i++; // Hypätään "fi" yli
+                }
+            }
+        } else if (strcmp(argv[i], "--verbose") == 0) {
             args->verbose = 1;
         } else if (strcmp(argv[i], "--help") == 0) {
             args->help = 1;
@@ -68,10 +98,18 @@ void parse_args(int argc, char *argv[], Args *args) {
             args->family_mode = 1;
         } else if (strcmp(argv[i], "--count") == 0 && i+1 < argc) {
             args->count = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--set-last-name") == 0 && i+1 < argc) {
+            strncpy(args->forced_surname, argv[++i], sizeof(args->forced_surname) - 1);
+        } else if (strcmp(argv[i], "--middle") == 0 && i+1 < argc) {
+            args->max_middle_names = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--output") == 0 && i+1 < argc) {
             const char *mode = argv[++i];
             if (strcmp(mode, "csv") == 0) args->output_mode = OUTPUT_CSV;
             else if (strcmp(mode, "json") == 0) args->output_mode = OUTPUT_JSON;
+        } else if (strcmp(argv[i], "--gender") == 0 && i+1 < argc) {
+            const char *g = argv[++i];
+            if (strcmp(g, "male") == 0 || strcmp(g, "m") == 0) args->gender = MALE;
+            else if (strcmp(g, "female") == 0 || strcmp(g, "f") == 0) args->gender = FEMALE;
         } else if (strcmp(argv[i], "--male") == 0) {
             args->gender = MALE;
         } else if (strcmp(argv[i], "--female") == 0) {
