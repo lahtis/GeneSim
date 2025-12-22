@@ -1,42 +1,31 @@
-# GeneSim project
-The purpose of this program is to facilitate the development of story-based game designs.
-* genesim - A comprehensive kinship and family relationship simulator. (in development)
-* namegen - NameGen a comprehensive lineage and family relationship simulator. (in development)
-* namegen - NameGen (demo release)
+<h1>🚀 What’s Actually New in v1.2.0?</h2>
+<h2>💎 1. The Power of "The Seed"</h2>
+In the demo, if you found a perfect character, they were gone the moment you closed the app.
 
-<h1>Namegen – Historical Name Generator - DEMO</h1>
-Namegen is a command-line based application designed to generate authentic Finnish names from specific historical periods.
+<li>Now: By using the --seed flag, you can share a specific number with a teammate, and they will generate the exact same names and ages on their machine. This is vital for game developers who need to keep character identities consistent across different builds.</li>
 
-* working demo versio 0.4.18 found releases namegen (demo).
+<h2>📁 2. Pro-Grade Data Export</h2>
+While the demo focused on "looking good" in the console, v1.2.0 focuses on Data Portability.
 
-Stop using generic placeholder names. This tool is the ultimate solution for Game Developers, TTRPG creators, and narrative designers who need historically accurate, culturally authentic, and uniquely structured Finnish names from the late 19th and early 20th centuries.
+<li>Valid JSON: We fixed the critical schema bug where years were outside the objects. Now, you can pipe the output directly into a web app or a game engine like Unity or Unreal without any extra parsing code.</li>
 
-✨ New: Couple Generation & Name Complexity! 
+<li>Clean CSV: A standardized 5-column structure ensures that your historical data opens perfectly in Excel or Google Sheets for world-building spreadsheets.</li>
 
-👩‍❤️‍👨 Build Instant, Believable Relationships
-* Couple Generation Mode: Instantly create married couples who automatically share the same, newly generated surname. Perfect for populating towns or establishing family lines with minimal effort.
-* New: Couple generation is now available via interactive prompt!
-* Layered Middle Names: Design names with depth and tradition. Set a maximum of three (3) middle names to generate complex, authentic-sounding Finnish identities (e.g., Jaakko Johannes Eemil Virtanen).
+<h2>🧬 3. Intelligent Chronology</h2>
+The demo had "Period-Specific Realism," but v1.2.0 adds Logical Realism.
 
-🛡️ Reliability for Production Pipelines
-We provide more than just names; we provide reliable production assets.
-* Period-Specific Realism: Select the exact historical era (from 1860s to 1920s) for your game setting. Only era-appropriate names are used, ensuring your world is always believable.
-* Validated Data (CRITICAL): Thanks to strict data validation, you receive 100% clean name strings. The program automatically rejects all non-name artifacts, numbers, and data errors during loading, ensuring smooth integration into your engine or database.
+<li>The age generation is now hard-coded into the export logic. When you generate a family, the birth years are mathematically consistent with the selected historical period, ensuring no "time-traveling" ancestors.</li>
 
-🎯 Ultimate Control for Content Creators
-Designed for Bulk and Detail:
-* Command Line: Use flags for mass asset generation and scripting (e.g., -p 5 -n 100 to create 100 names from the 1900s).
-* Interactive Mode: Run the program without flags and answer simple prompts—perfect for quick, ad-hoc character creation.
+<h2>🧪 4. Automated Verification</h2>
+The demo required manual testing.
 
-Refined Control Features:
-* Mandatory Surname: Set a specific surname override (e.g., -S Nieminen) for all generated characters, ideal for designating members of a particular in-game clan or faction.
-* Fine-Tune Probability: Control the middle name chance (0–100%) to match the complexity level needed for your characters.
-* Clean Input/Output: Technical fixes ensure input buffer cleaning, eliminating common interactive errors and ensuring a smooth, fast workflow.
+<li>v1.2.0 comes with a Python Test Suite. You can now verify that your name files, memory allocation, and output formats are working correctly in seconds. This makes it a professional-grade "production asset."</li>
 
-This is more than a name generator; it's a character asset creation tool engineered for narrative designers.
+<h2Summary: The "Swiss Army Knife" is Sharper</h2
+The demo was a character creator. Version 1.2.0 is a data engine. You have moved from a tool that shows you a name to a tool that delivers a validated, reproducible, and structured dataset.
 
 <h2>Technical Specifications</h2>
 <li>Language: Pure C.</li>
 <li>Compatibility: Designed to work on both Windows and Linux environments (using #ifdef constructs).</li>
-<li>Version: 0.4.18 (Development stage).</li>
+<li>Version: 1.2.0 (Development stage).</li>
 <li>Data is based on https://www.tuomas.salste.net/suku/kela-etunimet.html#M1 research. There are a lot of ready-made names.</li>
