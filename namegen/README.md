@@ -4,23 +4,55 @@ namegen is a command-line based name generator that supports multiple output for
 ## Options
 
 - `--period <number>`
-  Select the era (1–7, 0=random)
+Select the era (1–7, 0=random)
 
 - `--count <number>`
-  Generate how many names to generated
+- Generate how many names to generated
+
+- `--seed <number>`           
+Set random seed for reproducible results
+
+- `--single`
+Generate single names (default)
 
 - `--couple`
-  Generate a couple
+Generate a couple
 
 - `--family`
-  Generate a family
+Generate a family
 
-- `--output-file <filename>`
-  Prints to the desired file.
-  Print format in use: `text`, `csv` or `json`
+- `--male`
+Force male names
+
+- `--female`
+Force female names
+
+- `middle-chance <0-100>`
+Probability for a middle name (%)
+
+ - `--shared-surname`
+Force couples to share a surname
+
+ - `--maiden-name`
+Show maiden names for wives (nee.)
+
+ - `--force-manual`
+Disable automatic period-based logic
+
+- `--output <mode>`
+ Output format: plain, csv or json
+
+- `--stdout`
+Force output to console even if file is set
+
+ - `--age, -A`
+ Show birth years for generated names
 
 - `--help`
   Show help
+
+ - `--verbose`
+ Show detailed loading and generation info
 
 - `--version` 
   Shows the program's version number and build date
