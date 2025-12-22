@@ -28,15 +28,20 @@ typedef struct {
     int help;
     int version;
     int use_stdout;
-    int middle_chance;      // 0-100
     int shared_surname;
     int maiden_name;
     int force_manual;
     char format[256];
     int show_age;
+    char forced_surname[100]; // Tilaa pakotetulle sukunimelle
+    int max_middle_names;     // Keskinimien maksimimäärä
+    int middle_chance;        // Todennäköisyys (0-100)
+    int list_periods;
+    int lang_en; // 1 jos --en, 0 jos oletus (suomi)
 } Args;
 
 // Functions
+void print_ohjesaanto(const void *cfg_ptr, const Args *args);
 void parse_args(int argc, char *argv[], Args *args);
 void print_help(void);
 void print_version(void);

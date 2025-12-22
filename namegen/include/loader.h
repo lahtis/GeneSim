@@ -1,6 +1,9 @@
 #ifndef LOADER_H
 #define LOADER_H
 
+#include "config.h" // Tämä tuo Config-tyypin oikeasta paikasta (config.h)
+
+// Name-rakenne on OK pitää tässä, jos sitä ei ole name.h:ssa
 typedef struct {
     char *first;
     char *second;
@@ -15,18 +18,6 @@ typedef struct {
     Name *l;  int l_count;
 } NameData;
 
-typedef struct {
-    char *firstMDataPaths;
-    char *secondMDataPaths;
-    char *firstFDataPaths;
-    char *secondFDataPaths;
-    char *lastDataPaths;
-    char *output_file;
-    int count;
-    char *format;
-    int verbose;
-} Config;
-
 // Funktioiden esittelyt (prototyypit)
 Config *load_config(const char *filename);
 void free_config(Config *cfg);
@@ -34,7 +25,6 @@ void free_config(Config *cfg);
 Name *load_names(const char *filename, int target_period, int *count, int verbose);
 void free_names(Name *names, int count);
 
-// LISÄTTY: Nämä puuttuivat ja aiheuttivat "implicit declaration" virheet
 NameData* load_all_data_with_config(Config *cfg, int target_period, int verbose);
 void free_all_data(NameData *nd);
 
