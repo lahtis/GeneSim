@@ -1,3 +1,27 @@
+/**
+* @file namegen.c
+* @brief NameGen a comprehensive lineage and family relationship simulator.
+
+namegen - A comprehensive lineage and family relationship simulator.
+Developed pure C.
+
+Copyright (C) 2025 Tuomas L√§hteenm√§ki lahtis[@gmail.com]
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -25,23 +49,23 @@ int main(int argc, char *argv[]) {
 
     // 2. Asetetaan seed
     if (args.seed != 0) {
-        srand((unsigned int)args.seed); // K‰ytet‰‰n k‰ytt‰j‰n antamaa lukua
+        srand((unsigned int)args.seed); // K√§ytet√§√§n k√§ytt√§j√§n antamaa lukua
         if (args.verbose) {
             fprintf(stderr, "INFO: Seed set to %u\n", (unsigned int)args.seed);
         }
     } else {
-        srand((unsigned int)time(NULL)); // Jos seedi‰ ei annettu (0), k‰ytet‰‰n kelloa
+        srand((unsigned int)time(NULL)); // Jos seedi√§ ei annettu (0), k√§ytet√§√§n kelloa
     }
 
-    // TƒMƒ PUUTTUU: Tarkistetaan pit‰‰kˆ n‰ytt‰‰ help tai versio
+    // T√ÑM√Ñ PUUTTUU: Tarkistetaan pit√§√§k√∂ n√§ytt√§√§ help tai versio
     if (args.help) {
         print_help();
-        return 0; // Lopetetaan ohjelma t‰h‰n
+        return 0; // Lopetetaan ohjelma t√§h√§n
     }
 
     if (args.version) {
         print_version();
-        return 0; // Lopetetaan ohjelma t‰h‰n
+        return 0; // Lopetetaan ohjelma t√§h√§n
     }
     // 2. Ladataan konfiguraatio (HUOM: palauttaa Config-pointterin)
     Config *cfg = load_config("config.txt");
@@ -57,7 +81,7 @@ int main(int argc, char *argv[]) {
     // Indeksi on 0-6 tiedostoissasi
     int period_idx = args.period - 1;
 
-    // 4. Ladataan kaikki nimitiedostot (K‰ytet‰‰n load_all_data_with_config)
+    // 4. Ladataan kaikki nimitiedostot (K√§ytet√§√§n load_all_data_with_config)
     NameData *data = load_all_data_with_config(cfg, period_idx, args.verbose);
     if (!data) {
         fprintf(stderr, "FATAL: Could not load name data.\n");
@@ -82,9 +106,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // 6. Puhdistus (K‰ytet‰‰n loader.c:n funktioita)
+    // 6. Puhdistus (K√§ytet√§√§n loader.c:n funktioita)
     free_all_data(data);
     free_config(cfg);
 
     return 0;
 }
+
