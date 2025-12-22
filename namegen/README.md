@@ -57,9 +57,6 @@ Force output to console even if file is set
 - `--version` 
   Shows the program's version number and build date
 
-- `--verbose` 
-  Shows debug information
-
 ### examples
 
 Example randomly selects names from the desired season (--pediod) and prints them on the screen in txt-format, and finally saves the file as test.txt
