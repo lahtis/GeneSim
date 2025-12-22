@@ -1,8 +1,12 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
+#include <stdio.h>
 #include "loader.h"
+#include "args.h"
 
-Name pick_random_name(Name *names, int total);
+void generate_family(const Args *args, const Config *cfg, NameData *data, FILE *out);
+void generate_single(const Args *args, const Config *cfg, NameData *data, FILE *out);
+void generate_couple(const Args *args, const Config *cfg, NameData *data, FILE *out);
 
 #endif /* GENERATOR_H */
