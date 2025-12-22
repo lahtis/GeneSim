@@ -80,20 +80,6 @@ The example selects season 3 (--pediod 3) and randomly generates 4 names, printi
 
  `namegen.exe --pediod 3 --count 4 -format csv`
 
-## File structure
-
-namegen/ ├
-── src/ │ 
-├── main.c │ 
-├── args.c │ 
-├── generator.c │ 
-├── output.c |
-── include/ │
-├── args.h │
-├── generator.h │
-├── output.h | 
-├── namegen.cbp
-
 ## Build 
 
 The project can be opened and compiled in Code::Blocks:
@@ -101,14 +87,8 @@ The project can be opened and compiled in Code::Blocks:
 - Debug build: `bin/Debug/namegen`
 - Release build: `bin/Release/namegen`
 
-
 ## Development
 
 - Add new name lists and eras to the `generator.c` file
 - Extend the `Args` structure with new flags
 - Implement new output formats in the `output.c` file
-
-## Done
-- **0.4.18** = MAJOR.MINOR.PATCH
-- **Nov 17 2025 19:56:00** build date and time, which are automatically added during the translation (`__DATE__` ja `__TIME__` macros).
-
