@@ -10,7 +10,7 @@ secondFDataPaths=data/FI-fi/Finnish-women-middle-names.csv
 lastDataPaths=data/FI-fi/Finnish-last-names.csv
 
 # Yleiset asetukset
-output-file=output.txt
+output-file=
 format=text
-count=10
-verbose=1
+count=20
+verbose=0
