@@ -27,7 +27,7 @@ Force male names
 - `--female`
 Force female names
 
-- `middle-chance <0-100>`
+- `--middle-chance <0-100>`
 Probability for a middle name (%)
 
  - `--shared-surname`
