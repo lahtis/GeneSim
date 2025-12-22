@@ -53,6 +53,33 @@ void free_config(Config *cfg) {
     free(cfg);
 }
 
+void list_file_periods(const char *filename) {
+    FILE *fp = fopen(filename, "r");
+    if (!fp) {
+        printf("The file %s could not be opened.\n", filename);
+        return;
+    }
+
+    char line[1024];
+    if (fgets(line, sizeof(line), fp)) {
+        line[strcspn(line, "\r\n")] = 0; // Siivotaan rivinvaihto
+
+        char *token;
+        char *rest = line;
+        int idx = 0;
+
+        printf("\nFound periods in file [%s]:\n", filename);
+        printf("--------------------------------------------------\n");
+
+        // Go through the header row
+        while ((token = strtok_r(rest, ";,", &rest))) {
+            printf("Index %d: %s\n", idx, token);
+            idx++;
+        }
+        printf("--------------------------------------------------\n");
+    }
+    fclose(fp);
+}
 
     // Windows-yhteensopiva versio strsep-funktiosta
     char *my_strsep(char **stringp, const char *delim) {
@@ -80,48 +107,94 @@ void free_config(Config *cfg) {
         return 1;
     }
 
-Name *load_names(const char *filename, int target_period, int *count) {
+Name *load_names(const char *filename, int target_period, int *count, int verbose) {
     if (!filename) return NULL;
     FILE *fp = fopen(filename, "r");
-    if (!fp) { perror("fopen"); return NULL; }
+    if (!fp) {
+        if (verbose) printf("ERROR: Failed to open file: %s\n", filename);
+        return NULL;
+    }
 
     int capacity = 100;
     *count = 0;
     Name *names = malloc(capacity * sizeof(Name));
     char line[2048];
 
-    // Ohita otsikkorivi
+    // Ohitetaan otsikkorivi
     fgets(line, sizeof(line), fp);
 
     while (fgets(line, sizeof(line), fp)) {
         line[strcspn(line, "\r\n")] = 0;
         char *ptr = line;
         char *token = NULL;
+        char *found_token = NULL;
         int current_col = 0;
 
-        while (current_col <= target_period) {
-            token = my_strsep(&ptr, ",");
-            if (current_col == target_period) break;
+        // Käydään sarakkeet läpi
+        while ((token = my_strsep(&ptr, ",")) != NULL) {
+            // Trimataan välilyönnit heti
+            while (isspace((unsigned char)*token)) token++;
+
+            // Jos sarake ei ole tyhjä, otetaan se talteen "varalle"
+            if (strlen(token) > 0) {
+                found_token = token;
+            }
+
+            // Jos päästiin tavoitesarakkeeseen ja se ei ole tyhjä, valitaan se
+            if (current_col == target_period && strlen(token) > 0) {
+                found_token = token;
+                break;
+            }
             current_col++;
-            if (!ptr) { token = NULL; break; }
         }
 
-        if (token) {
-            while (isspace((unsigned char)*token)) token++;
-            if (strlen(token) > 0 && is_valid_name(token)) {
-                if (*count >= capacity) {
-                    capacity *= 2;
-                    names = realloc(names, capacity * sizeof(Name));
-                }
-                names[*count].first = strdup(token);
-                names[*count].second = strdup(token);
-                names[*count].last = strdup(token);
-                (*count)++;
+        // Jos löydettiin jokin nimi (joko tavoitesarakkeesta tai varalta jostain muualta)
+        if (found_token && strlen(found_token) > 0 && is_valid_name(found_token)) {
+            if (*count >= capacity) {
+                capacity *= 2;
+                Name *temp = realloc(names, capacity * sizeof(Name));
+                if(!temp) break;
+                names = temp;
             }
+            names[*count].first = strdup(found_token);
+            names[*count].second = NULL;
+            names[*count].last = NULL;
+            (*count)++;
         }
     }
+
     fclose(fp);
+    // DEBUG: Tulostetaan montako nimeä oikeasti saatiin talteen
+    if (verbose &&*count > 0) {
+        printf("INFO: Loaded %d names from %s\n", *count, filename);
+    }
     return names;
+}
+
+NameData* load_all_data_with_config(Config *cfg, int target_period, int verbose) {
+    if (!cfg) return NULL;
+
+    NameData *nd = calloc(1, sizeof(NameData));
+    if (!nd) return NULL;
+
+    // Kaytetaan lataamiseen sinun load_names-funktiota
+    nd->m1 = load_names(cfg->firstMDataPaths, target_period, &nd->m1_count, verbose);
+    nd->m2 = load_names(cfg->secondMDataPaths, target_period, &nd->m2_count, verbose);
+    nd->f1 = load_names(cfg->firstFDataPaths, target_period, &nd->f1_count, verbose);
+    nd->f2 = load_names(cfg->secondFDataPaths, target_period, &nd->f2_count, verbose);
+    nd->l  = load_names(cfg->lastDataPaths, target_period, &nd->l_count, verbose);
+
+    return nd;
+}
+
+void free_all_data(NameData *nd) {
+    if (!nd) return;
+    free_names(nd->m1, nd->m1_count);
+    free_names(nd->m2, nd->m2_count);
+    free_names(nd->f1, nd->f1_count);
+    free_names(nd->f2, nd->f2_count);
+    free_names(nd->l, nd->l_count);
+    free(nd);
 }
 
 void free_names(Name *names, int count) {

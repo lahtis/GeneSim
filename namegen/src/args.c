@@ -4,16 +4,37 @@
 #include "args.h"
 #include "version.h"
 
-void print_help(void) {
-    printf("Usage: namegen [options]\n");
-    printf("\n");
-    printf("  --period <number>     Select period (1–7, 0=random)\n");
-    printf("  --count <number>      Number of entries\n");
-    // printf("  --couple              Generate couples\n");
-    // printf("  --family              Generate families\n");
-    printf("  --output <mode>       plain, csv, json\n");
-    printf("  --help                Show this help\n");
-    printf("  --version             Show version\n");
+void print_help() {
+    printf("Usage: namegen [options]\n\n");
+
+    printf("General:\n");
+    printf("  --period <1-7>            Select historical period (1: 1800s, 7: modern)\n");
+    printf("  --count <number>          Number of names/families to generate\n");
+    printf("  --seed <number>           Set random seed for reproducible results\n\n");
+
+    printf("Generation Modes:\n");
+    printf("  --single                  Generate single names (default)\n");
+    printf("  --couple                  Generate couples (male & female)\n");
+    printf("  --family                  Generate families (parents & children)\n");
+    printf("  --male                    Force male names\n");
+    printf("  --female                  Force female names\n\n");
+
+    printf("Advanced Options:\n");
+    printf("  --middle-chance <0-100>   Probability for a middle name (%%)\n");
+    printf("  --shared-surname          Force couples to share a surname\n");
+    printf("  --maiden-name             Show maiden names for wives (nee.)\n");
+    printf("  --force-manual            Disable automatic period-based logic\n\n");
+
+    printf("Output & Formatting:\n");
+    printf("  --output <mode>           Output format: plain, csv, json\n");
+    printf("  --stdout                  Force output to console even if file is set\n");
+    printf("  --age, -A                 Show birth years for generated names\n\n");
+    // printf("  --format <str>            Custom text format (e.g. \"%%f %%l\")\n\n");
+
+    printf("System:\n");
+    printf("  --verbose                 Show detailed loading and generation info\n");
+    printf("  --help                    Show this help message\n");
+    printf("  --version                 Show version information\n");
 }
 
 void print_version(void) {
@@ -26,9 +47,11 @@ void parse_args(int argc, char *argv[], Args *args) {
     args->verbose = 0;
     args->help = 0;
     args->version = 0;
+    args->gender = RANDOM_GENDER;
     args->count = 1;
     args->family_mode = 0;
     args->couple_mode = 0;
+    args->show_age = 0;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--verbose") == 0) {
@@ -49,6 +72,26 @@ void parse_args(int argc, char *argv[], Args *args) {
             const char *mode = argv[++i];
             if (strcmp(mode, "csv") == 0) args->output_mode = OUTPUT_CSV;
             else if (strcmp(mode, "json") == 0) args->output_mode = OUTPUT_JSON;
+        } else if (strcmp(argv[i], "--male") == 0) {
+            args->gender = MALE;
+        } else if (strcmp(argv[i], "--female") == 0) {
+            args->gender = FEMALE;
+        } else if (strcmp(argv[i], "--seed") == 0 && i+1 < argc) {
+            args->seed = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--format") == 0 && i+1 < argc) {
+            strncpy(args->format, argv[++i], sizeof(args->format) - 1);
+        } else if (strcmp(argv[i], "--stdout") == 0) {
+            args->use_stdout = 1;
+        } else if (strcmp(argv[i], "--shared-surname") == 0) {
+            args->shared_surname = 1;
+        } else if (strcmp(argv[i], "--maiden-name") == 0) {
+            args->maiden_name = 1;
+        } else if (strcmp(argv[i], "--force-manual") == 0) {
+            args->force_manual = 1;
+        } else if (strcmp(argv[i], "--middle-chance") == 0 && i + 1 < argc) {
+            args->middle_chance = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--age") == 0 || strcmp(argv[i], "-A") == 0) {
+            args->show_age = 1;
         }
     }
 }
