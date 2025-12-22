@@ -21,7 +21,7 @@ The demo required manual testing.
 
 <li>v1.2.0 comes with a Python Test Suite. You can now verify that your name files, memory allocation, and output formats are working correctly in seconds. This makes it a professional-grade "production asset."</li>
 
-<h2Summary: The "Swiss Army Knife" is Sharper</h2
+<h2>Summary: The "Swiss Army Knife" is Sharper</h2>
 The demo was a character creator. Version 1.2.0 is a data engine. You have moved from a tool that shows you a name to a tool that delivers a validated, reproducible, and structured dataset.
 
 <h2>Technical Specifications</h2>
