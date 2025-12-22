@@ -7,9 +7,9 @@ namegen is a command-line based name generator that supports multiple output for
 Select the era (1–7, 0=random)
 
 - `--count <number>`
-- Generate how many names to generated
+Generate how many names to generated
 
-- `--seed <number>`           
+- `--seed <number>`
 Set random seed for reproducible results
 
 - `--single`
