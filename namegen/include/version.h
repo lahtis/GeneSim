@@ -1,10 +1,10 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-// Versio ja tekij‰tiedot
+// Versio ja tekij√§tiedot
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 3
-#define VERSION_PATCH 0
+#define VERSION_PATCH 1
 #define VERSION_SUFFIX "Xmas-Edition"
 #define VERSION_AUTHOR "Tuomas Lahteenmaki / GeneSim Team"
 #define VERSION_GITHUB "https://github.com/lahtis/GeneSim"
@@ -20,3 +20,4 @@
 #define VERSION_STRING XSTR(VERSION_MAJOR) "." XSTR(VERSION_MINOR) "." XSTR(VERSION_PATCH) " (" VERSION_SUFFIX ")"
 
 #endif
+
