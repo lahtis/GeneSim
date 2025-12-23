@@ -1,4 +1,4 @@
-# NameGen v1.3.0 (Xmas-Edition)
+# NameGen v1.3.1 (Xmas-Edition)
 
 NameGen is a powerful, command-line based historical name generator developed as part of the **GeneSim** project. It simulates Finnish naming conventions across seven different historical periods (1850–1920) and supports complex family structures.
 
