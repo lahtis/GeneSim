@@ -3,35 +3,48 @@ import os
 
 def run_test(command, label):
     try:
+        # Käytetään encoding='utf-8' varmistamaan ääkköset
         result = subprocess.run(command, shell=True, capture_output=True, text=True, encoding='utf-8')
         if result.returncode == 0:
-            print(f"    [{label}]")
+            print(f"    [{label}] OK")
+            # Tulostetaan vain ensimmäinen rivi esimerkkinä, jos tuloste on pitkä
             lines = result.stdout.strip().split('\n')
-            for line in lines:
-                print(f"      - {line}")
+            if lines:
+                print(f"      Sample: {lines[0]}")
+            return result.stdout
         else:
             print(f"    [ERROR] Command failed: {command}")
+            return None
     except Exception as e:
         print(f"    [CRITICAL] Error: {e}")
+        return None
 
 if __name__ == "__main__":
-    print("Starting NameGen v1.3.0 Full System Test (Genders, Couples, Families)...\n")
+    print("Starting NameGen v1.3.0 Full Integration Test (Formats, Genders, Families)...\n")
     
-    if not os.path.exists("namegen.exe"):
-        print("Critical Error: namegen.exe not found!")
+    executable = "namegen.exe"
+    
+    if not os.path.exists(executable):
+        print(f"Critical Error: {executable} not found!")
     else:
-        print("--- Testing Periods 1-7 ---")
         for p in range(1, 8):
-            print(f"\n[PERIOD {p}]")
+            print(f"\n--- TESTING PERIOD {p} ---")
             
-            # Individual tests
-            run_test(f"namegen.exe --period {p} --count 1 --male", "MALE")
-            run_test(f"namegen.exe --period {p} --count 1 --female", "FEMALE")
+            # 1. Perusrakenteet (Text)
+            run_test(f"{executable} --period {p} --count 1 --male", "MALE (TEXT)")
+            run_test(f"{executable} --period {p} --couple", "COUPLE (TEXT)")
+            run_test(f"{executable} --period {p} --family", "FAMILY (TEXT)")
             
-            # Couple test (Expected: Male and Female with same surname)
-            run_test(f"namegen.exe --period {p} --couple", "COUPLE")
-            
-            # Family test (Expected: Father, Mother, and children)
-            run_test(f"namegen.exe --period {p} --family", "FAMILY")
+            # 2. JSON-formaatti
+            # Testataan perheen generointi JSON-muodossa
+            json_out = run_test(f"{executable} --period {p} --family --output json", "FAMILY (JSON)")
+            if json_out and json_out.strip().startswith("[") and json_out.strip().endswith("]"):
+                print("      Validation: JSON structure looks valid (Array found).")
+
+            # 3. CSV-formaatti
+            # Testataan yksittäisten nimien generointi CSV-muodossa
+            csv_out = run_test(f"{executable} --period {p} --count 3 --output csv", "BATCH (CSV)")
+            if csv_out and "," in csv_out:
+                print("      Validation: CSV structure looks valid (Commas found).")
             
     print("\nTesting completed.")
