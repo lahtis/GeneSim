@@ -71,19 +71,17 @@ void parse_args(int argc, char *argv[], Args *args) {
     args->show_age = 0;
 
     for (int i = 1; i < argc; i++) {
-    if (strcmp(argv[i], "-lp") == 0 || strcmp(argv[i], "--list-periods") == 0) {
-            args->list_periods = 1;
-
-            // Tarkistetaan onko seuraava sana olemassa ja onko se kieli
-            if (i + 1 < argc) {
-                if (strcmp(argv[i + 1], "en") == 0) {
-                    args->lang_en = 1;
-                    i++; // Hypätään "en" yli, ettei sitä luulla muuksi komennoksi
-                } else if (strcmp(argv[i + 1], "fi") == 0) {
-                    args->lang_en = 0;
-                    i++; // Hypätään "fi" yli
-                }
+        if (strcmp(argv[i], "-lp") == 0 || strcmp(argv[i], "--list-periods") == 0) {
+        args->list_periods = 1;
+        if (i + 1 < argc && argv[i+1][0] != '-') { // Varmistetaan ettei seuraava ole uusi lippu
+            if (strcmp(argv[i + 1], "en") == 0) {
+                args->lang_en = 1;
+                i++;
+            } else if (strcmp(argv[i + 1], "fi") == 0) {
+                args->lang_en = 0;
+                i++;
             }
+        }
         } else if (strcmp(argv[i], "--verbose") == 0) {
             args->verbose = 1;
         } else if (strcmp(argv[i], "--help") == 0) {

@@ -177,6 +177,11 @@ int main(int argc, char *argv[]) {
     }
 
     // 7. GENEROINTI
+    // Jos output on JSON, aloitetaan taulukko
+    if (args.output_mode == OUTPUT_JSON) {
+        printf("[\n");
+    }
+
     for (int i = 0; i < args.count; i++) {
         if (args.family_mode) {
             generate_family(&args, cfg, data, stdout);
@@ -185,6 +190,17 @@ int main(int argc, char *argv[]) {
         } else {
             generate_single(&args, cfg, data, stdout);
         }
+
+        // Jos on useampi generointi ja JSON, lisätään pilkku väliin
+        // Huom: Tämä vaatii, että generaattorifunktiot osaavat käsitellä sisäiset pilkut
+        if (args.output_mode == OUTPUT_JSON && i < args.count - 1) {
+            printf(",\n");
+        }
+    }
+
+    // Jos output on JSON, suljetaan taulukko
+    if (args.output_mode == OUTPUT_JSON) {
+        printf("\n]\n");
     }
 
     // 8. PUHDISTUS
