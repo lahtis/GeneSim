@@ -48,7 +48,7 @@
       "max_game_year": 7
     },
     {
-      "file": "sukunimet_yleiset.csv",
+      "file": "sukunimet_yleiset_master.csv",
       "type": "common_surname",
       "global_weight": 1.0,
       "max_game_year": 11

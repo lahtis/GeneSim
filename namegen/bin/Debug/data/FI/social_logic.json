@@ -28,7 +28,7 @@
           },
           "family_params": {
             "avg_children": 6,
-            "infant_mortality_rate": 0.22
+            "base_infant_mortality_rate": 0.22
           }
         },
         {
@@ -55,7 +55,7 @@
           },
           "family_params": {
             "avg_children": 3,
-            "infant_mortality_rate": 0.04
+            "base_infant_mortality_rate": 0.04
           }
         }
       ],

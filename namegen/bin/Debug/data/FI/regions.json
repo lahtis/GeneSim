@@ -4,7 +4,11 @@
       "id": "yleinen_suomi",
       "name_fi": "Koko Suomi (Tasapainotettu)",
       "surname_weights": { "common_surname": 1.0, "modern_finnish": 1.0, "regional_east": 1.0, "regional_west": 1.0, "historical_swedish": 1.0, "elite": 0.5 },
-      "occupation_bonuses": {}
+      "occupation_bonuses": {},
+      "demographic_modifiers": {
+        "mortality_multiplier": 1.0,
+        "fertility_multiplier": 1.0
+      }
     },
     {
       "id": "turku",
@@ -17,7 +21,11 @@
       "name_fi": "Helsinki (Hallinto & valta)",
       "surname_weights": { "elite": 2.5, "historical_swedish": 1.8, "modern_finnish": 1.5 },
       "occupation_bonuses": { "Pankinjohtaja": 2.0, "Lääkäri": 2.0, "Toimistovirkailija": 2.5, "Konekirjoittaja": 2.0 },
-      "override_social": { "religion_weights": { "Siviilirekisteri": 0.20, "Luterilainen": 0.80 } }
+      "demographic_modifiers": {
+        "mortality_multiplier": 1.1,
+        "fertility_multiplier": 0.8
+      },
+      "note": "Kaupunkiympäristö nosti tautikuolleisuutta, mutta perhekoko oli pienempi."
     },
     {
       "id": "tampere",
@@ -42,7 +50,12 @@
       "id": "it_suomi",
       "name_fi": "Itä-Suomi (Metsä & kaski)",
       "surname_weights": { "regional_east": 3.5, "common_surname": 1.0 },
-      "occupation_bonuses": { "Metsätyömies": 2.5, "Metsuri": 2.5, "Tukkipoika": 2.2, "Uittomies": 2.2, "Paimenpoika": 1.8 }
+      "occupation_bonuses": { "Metsätyömies": 2.5, "Metsuri": 2.5, "Tukkipoika": 2.2, "Uittomies": 2.2, "Paimenpoika": 1.8 },
+      "demographic_modifiers": {
+        "mortality_multiplier": 0.85,
+        "fertility_multiplier": 1.25
+      },
+      "note": "Pidempi rintaruokinta laski kuolleisuutta; kaskitalous suosi suuria lapsimääriä."
     },
     {
       "id": "lansirannikko",
@@ -54,7 +67,12 @@
       "id": "pohjanmaa",
       "name_fi": "Pohjanmaa (Vakaa maatalous)",
       "surname_weights": { "regional_west": 3.5, "common_surname": 1.2 },
-      "occupation_bonuses": { "Pienviljelijä": 1.8, "Torppari": 1.5, "Seppä": 1.6, "Muurari": 1.4 }
+      "occupation_bonuses": { "Pienviljelijä": 1.8, "Torppari": 1.5, "Seppä": 1.6, "Muurari": 1.4 },
+      "demographic_modifiers": {
+        "mortality_multiplier": 1.35,
+        "fertility_multiplier": 1.15
+      },
+      "note": "Korkea kuolleisuus johtuen historiassa esiintyneistä ruokintatavoista, mutta suuret perheet."
     },
     {
       "id": "oulu_kainuu",
