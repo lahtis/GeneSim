@@ -122,17 +122,17 @@
     }
   ],
   "seasons": [
-    {"id": 1, "years": "1860-1869", "note_fi": "Alkupiste"},
-    {"id": 2, "years": "1870-1879", "note_fi": "Vakiintuminen"},
-    {"id": 3, "years": "1880-1889", "note_fi": "Vakiintuminen"},
-    {"id": 4, "years": "1890-1899", "note_fi": "Suomalaisuusliike alkaa"},
-    {"id": 5, "years": "1900-1909", "note_fi": "Uudisnimien yleistyminen"},
-    {"id": 6, "years": "1910-1919", "note_fi": "Itsenäistymisen aika"},
-    {"id": 7, "years": "1920-1929", "note_fi": "Etunimien loppu"},
-    {"id": 8, "years": "1930-1939", "note_fi": "Sukunimien kehitys jatkuu"},
-    {"id": 9, "years": "1940-1949", "note_fi": "Sotavuodet"},
-    {"id": 10, "years": "1950-1959", "note_fi": "Jälleenrakennus"},
-    {"id": 11, "years": "1960-1969", "note_fi": "Kaupungistuminen ja modernisaatio"}
+    {"id": 1, "years": "1860-1869", "note_fi": "Nälkävuodet ja suuri murros", "note_en": "The Great Famine and Era of Transition"},
+    {"id": 2, "years": "1870-1879", "note_fi": "Höyryn ja tervan valtakausi", "note_en": "The Golden Age of Steam and Tar"},
+    {"id": 3, "years": "1880-1889", "note_fi": "Taloudellinen herääminen", "note_en": "Economic Awakening"},
+    {"id": 4, "years": "1890-1899", "note_fi": "Kansallinen nousu (Fennomania)", "note_en": "Rise of National Identity"},
+    {"id": 5, "years": "1900-1909", "note_fi": "Suomalaistamisbuumi", "note_en": "The Fennicization Movement"},
+    {"id": 6, "years": "1910-1919", "note_fi": "Sota ja itsenäistyminen", "note_en": "War and Independence"},
+    {"id": 7, "years": "1920-1929", "note_fi": "Modernisoituva tasavalta", "note_en": "The Modernizing Republic"},
+    {"id": 8, "years": "1930-1939", "note_fi": "Eheytyvä Suomi", "note_en": "Social Consolidation"},
+    {"id": 9, "years": "1940-1949", "note_fi": "Sota-aika ja evakuointi", "note_en": "War Years and Displacement"},
+    {"id": 10, "years": "1950-1959", "note_fi": "Jälleenrakennus", "note_en": "The Era of Reconstruction"},
+    {"id": 11, "years": "1960-1969", "note_fi": "Suuri muutto kaupunkeihin", "note_en": "The Great Migration to Cities"}
   ],
   "metadata": {
     "source": "Post-mortem registry 1860-1970",
