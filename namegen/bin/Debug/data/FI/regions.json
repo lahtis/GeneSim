@@ -3,14 +3,7 @@
     {
       "id": "yleinen_suomi",
       "name_fi": "Koko Suomi (Tasapainotettu)",
-      "surname_weights": {
-        "common_surname": 1.0,
-        "modern_finnish": 1.0,
-        "regional_east": 1.0,
-        "regional_west": 1.0,
-        "historical_swedish": 1.0,
-        "elite": 0.5
-      },
+      "surname_weights": { "common_surname": 1.0, "modern_finnish": 1.0, "regional_east": 1.0, "regional_west": 1.0, "historical_swedish": 1.0, "elite": 0.5 },
       "occupation_bonuses": {}
     },
     {
@@ -40,6 +33,12 @@
       "override_social": { "religion_weights": { "Ortodoksi": 0.30, "Luterilainen": 0.70 } }
     },
     {
+      "id": "kymenlaakso",
+      "name_fi": "Kymenlaakso (Metsäteollisuus)",
+      "surname_weights": { "common_surname": 1.2, "regional_east": 1.2, "modern_finnish": 1.1 },
+      "occupation_bonuses": { "Paperityöläinen": 4.0, "Sahanterittäjä": 3.0, "Tukkijätkä": 2.5, "Koneenkäyttäjä": 2.0 }
+    },
+    {
       "id": "it_suomi",
       "name_fi": "Itä-Suomi (Metsä & kaski)",
       "surname_weights": { "regional_east": 3.5, "common_surname": 1.0 },
@@ -56,6 +55,16 @@
       "name_fi": "Pohjanmaa (Vakaa maatalous)",
       "surname_weights": { "regional_west": 3.5, "common_surname": 1.2 },
       "occupation_bonuses": { "Pienviljelijä": 1.8, "Torppari": 1.5, "Seppä": 1.6, "Muurari": 1.4 }
+    },
+    {
+      "id": "oulu_kainuu",
+      "name_fi": "Oulu ja Kainuu (Tervan tie)",
+      "surname_weights": { "common_surname": 1.2, "regional_east": 1.5 },
+      "occupation_bonuses": { "Tervanpolttaja": 5.0, "Tervasoutaja": 4.0, "Metsätyömies": 2.5, "Laukkuryssä": 1.8 },
+      "period_modifiers": {
+        "max_year": 1910,
+        "note": "Tervan merkitys vähenee purjelaivakauden päättyessä."
+      }
     },
     {
       "id": "lappi",
