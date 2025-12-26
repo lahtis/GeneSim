@@ -7,7 +7,7 @@ namegen is a command-line based name generator that supports multiple output for
  Show historical eras. Use locale fi or en.
 
 - `--period <number>`
-Select the era (1–7, 0=random)
+Select the era (1–11, 0=random)
 
 - `--count <number>`
 Generate how many names to generated
