@@ -137,6 +137,9 @@
   "metadata": {
     "source": "Post-mortem registry 1860-1970",
     "note": "Bias correction false: assumes age-at-death distribution roughly 70y.",
-    "last_updated": "2025-12-25"
+    "last_updated": "2025-12-25",
+    "country": "Finland",
+    "total_periods": 11,
+    "period_info": "1-7 basic, 8-11 special"
   }
 }

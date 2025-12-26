@@ -1,64 +1,91 @@
-# NameGen v1.3.1 (Xmas-Edition)
-
-NameGen is a powerful, command-line based historical name generator developed as part of the **GeneSim** project. It simulates Finnish naming conventions across seven different historical periods (1850–1920) and supports complex family structures.
-
-## Features
-
-- **Historical Accuracy:** Seven distinct eras (Periods 1–7) reflecting the evolution of Finnish names.
-- **Family Logic:** Generate individuals, couples, or full families with realistic birth years and naming patterns.
-- **Multilingual:** Built-in documentation in Finnish and English.
-- **Flexible Output:** Supports Plain text, CSV, and JSON formats.
+# namegen 
+namegen is a command-line based name generator that supports multiple output formats and different generation modes.
 
 ## Options
 
-### Generation Modes
-- `--single` : Generate single names (default).
-- `--couple` : Generate a couple (Male & Female).
-- `--family` : Generate a full family (Parents & Children).
+- `--period <number>`
+Select the era (1–7, 0=random)
 
-### Filters & Logic
-- `--period <1-7>` : Select the era (1=1850, 7=1920, 0=random).
-- `--count <number>` : Number of units to generate.
-- `--male` / `--female` : Force specific gender for single names.
-- `--maiden-name` : Show maiden names for wives (e.g., *nee Laitinen*).
-- `--shared-surname` : Force couples/families to share a surname.
-- `--middle-chance <0-100>` : Probability for a middle name (%).
-- `--age, -A` : Show birth years based on the selected period.
+- `--count <number>`
+Generate how many names to generated
 
-### Technical & Output
-- `--output <plain|csv|json>` : Set output format.
-- `--seed <number>` : Set random seed for reproducible results.
-- `--stdout` : Force output to console.
-- `--lp <fi|en>` : Show guidelines/help in the selected language.
-- `--verbose` : Show detailed loading and generation info.
-- `--version` : Show version, author, and GitHub info.
-- `--help` : Show help.
+- `--seed <number>`
+Set random seed for reproducible results
 
-## Examples
+- `--single`
+Generate single names (default)
 
-**1. Generate 10 male names from Period 1 (1850) and save to CSV:** `namegen.exe --period 1 --count 10 --male --output csv > names.csv`
+- `--couple`
+Generate a couple
 
-**2. Generate a realistic family from Period 4 (1885) with ages:** `namegen.exe --period 4 --family --age`
+- `--family`
+Generate a family
 
-**3. Generate 3 JSON-formatted couples from Period 3:** `namegen.exe --period 3 --count 3 --couple --output json`
+- `--male`
+Force male names
 
-**4. Show Finnish instructions:** `namegen.exe -lp fi`
+- `--female`
+Force female names
 
-## Build & Installation
+- `--middle-chance <0-100>`
+Probability for a middle name (%)
 
-The project is designed to be compiled with **GCC** or opened in **Code::Blocks**:
+ - `--shared-surname`
+Force couples to share a surname
 
-1. Open `namegen.cbp` in Code::Blocks.
-2. Select `Release` build target.
-3. Ensure the `data/` folder are in the same directory as the executable.
+ - `--maiden-name`
+Show maiden names for wives (nee.)
 
-- **Debug build:** `bin/Debug/namegen.exe`
-- **Release build:** `bin/Release/namegen.exe`
+ - `--force-manual`
+Disable automatic period-based logic
 
-## Development & License
+- `--output <mode>`
+ Output format: plain, csv or json
 
-- **Author:** Tuomas Lähteenmäki 
-- **Lisence:** GPLv3
+- `--stdout`
+Force output to console even if file is set
+
+ - `--age, -A`
+ Show birth years for generated names
+
+- `--help`
+  Show help
+
+ - `--verbose`
+ Show detailed loading and generation info
+
+- `--version` 
+  Shows the program's version number and build date
+
+- `--verbose` 
+  Shows debug information
+
+### examples
+
+Example randomly selects names from the desired season (--pediod) and prints them on the screen in txt-format, and finally saves the file as test.txt
+
+`namegen.exe --pediod 1 -format text --output-file test.txt`
+
+The program uses the default of 1 for selecting names. You can change it by providing the flag --count <number>, or you can change it in the settings.
+
+The example randomly selects names from the desired 2 season (--pediod) and prints them on the screen in CSV-format, as well as saves the file under the name test.csv
+
+ `namegen.exe --pediod 2 -format csv --output-file test.csv`
+
+The example selects season 3 and randomly generates 3 names, printing them on the screen in JSON format, and also saves them to a file named test.json
+
+ `namegen.exe --pediod 3 --count 3 -format json --output-file test.json`
+
+The example selects season 3 (--pediod 3) and randomly generates 4 names, printing them on the screen in CSV format, and also saves them to a file named output
+
+ `namegen.exe --pediod 3 --count 4 -format csv`
+
+## Build 
+
+The project can be opened and compiled in Code::Blocks:
+
+- Debug build: `bin/Debug/namegen`
+- Release build: `bin/Release/namegen`
 
 ## Development
 

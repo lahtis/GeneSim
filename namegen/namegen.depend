@@ -101,3 +101,134 @@
 	<stdlib.h>
 	<string.h>
 
+1766713346 source:c:\users\lahti\desktop\genesim-main\namegen\src\args.c
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	"version.h"
+	"args.h"
+
+1766715996 c:\users\lahti\desktop\genesim-main\namegen\include\args.h
+	"cJSON.h"
+
+1766448610 c:\users\lahti\desktop\genesim-main\namegen\include\version.h
+
+1766689850 source:c:\users\lahti\desktop\genesim-main\namegen\src\config.c
+	<stdio.h>
+	<string.h>
+	<ctype.h>
+	"config.h"
+
+1766692608 c:\users\lahti\desktop\genesim-main\namegen\include\config.h
+
+1766700025 source:c:\users\lahti\desktop\genesim-main\namegen\src\csv_reader.c
+	"args.h"
+	<string.h>
+	<stdlib.h>
+	<stdio.h>
+	"csv_reader.h"
+	"debug.h"
+	"normalize.h"
+
+1766244959 c:\users\lahti\desktop\genesim-main\namegen\include\csv_reader.h
+	"args.h"
+
+1766244959 c:\users\lahti\desktop\genesim-main\namegen\include\debug.h
+
+1766244959 c:\users\lahti\desktop\genesim-main\namegen\include\normalize.h
+
+1766244959 source:c:\users\lahti\desktop\genesim-main\namegen\src\debug.c
+	<stdio.h>
+	"debug.h"
+
+1766703855 source:c:\users\lahti\desktop\genesim-main\namegen\src\generator.c
+	"generator.h"
+	"output.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"args.h"
+
+1766363746 c:\users\lahti\desktop\genesim-main\namegen\include\generator.h
+	<stdio.h>
+	"loader.h"
+	"args.h"
+
+1766710334 c:\users\lahti\desktop\genesim-main\namegen\include\loader.h
+	"config.h"
+	"cJSON.h"
+
+1766710278 source:c:\users\lahti\desktop\genesim-main\namegen\src\loader.c
+	"cJSON.h"
+	"loader.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	<sys/stat.h>
+
+1766244959 source:c:\users\lahti\desktop\genesim-main\namegen\src\name_data.c
+	"name_data.h"
+	"csv_reader.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"debug.h"
+	"normalize.h"
+
+1766244959 c:\users\lahti\desktop\genesim-main\namegen\include\name_data.h
+	"config.h"
+	"args.h"
+
+1766244959 source:c:\users\lahti\desktop\genesim-main\namegen\src\names.c
+	<stdlib.h>
+
+1766244959 source:c:\users\lahti\desktop\genesim-main\namegen\src\normalize.c
+	<string.h>
+	"normalize.h"
+
+1766695905 source:c:\users\lahti\desktop\genesim-main\namegen\src\output.c
+	"output.h"
+	<stdio.h>
+	<string.h>
+
+1766695733 c:\users\lahti\desktop\genesim-main\namegen\include\output.h
+	"loader.h"
+	<stdio.h>
+
+1766244959 source:c:\users\lahti\desktop\genesim-main\namegen\src\split_names.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	"split_names.h"
+
+1766244959 c:\users\lahti\desktop\genesim-main\namegen\include\split_names.h
+
+1766714473 source:c:\users\lahti\desktop\genesim-main\namegen\src\main.c
+	"cJSON.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<locale.h>
+	<windows.h>
+	"loader.h"
+	"config.h"
+	"args.h"
+	"generator.h"
+
+1766691208 source:c:\users\lahti\desktop\genesim-main\namegen\src\cjson.c
+	<string.h>
+	<stdio.h>
+	<math.h>
+	<stdlib.h>
+	<limits.h>
+	<ctype.h>
+	<float.h>
+	<locale.h>
+	"cJSON.h"
+
+1766691208 c:\users\lahti\desktop\genesim-main\namegen\include\cjson.h
+	<stddef.h>
+

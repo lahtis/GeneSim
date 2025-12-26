@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "args.h"
 #include "version.h"
+#include "args.h"
 
 void print_help() {
     printf("Usage: namegen [options]\n\n");
@@ -13,7 +13,7 @@ void print_help() {
     printf("  namegen.exe -lp en\n\n");
 
     printf("Generation:\n");
-    printf("  --period <1-7>            Select historical period (1: 1850, 7: 1920)\n");
+    printf("  --period <1-11>           Select historical period (1: 1850, 11: 1960([Latest]))\n");
     printf("  --count <number>          Number of names/families to generate\n");
     printf("  --seed <number>           Set random seed for reproducible results\n\n");
 
@@ -59,30 +59,34 @@ void print_version(void) {
 
 
 void parse_args(int argc, char *argv[], Args *args) {
+    // 1. Alustus (Nollataan koko 432 tavun lohko kerralla)
     memset(args, 0, sizeof(Args));
+
+    // 2. Oletusarvot
     args->output_mode = OUTPUT_PLAIN;
-    args->verbose = 0;
-    args->help = 0;
-    args->version = 0;
     args->gender = RANDOM_GENDER;
     args->count = 1;
-    args->family_mode = 0;
-    args->couple_mode = 0;
-    args->show_age = 0;
 
+    // 3. YKSI selke‰ silmukka
     for (int i = 1; i < argc; i++) {
+
+        // --- LISTAUS-KOMENTO ---
         if (strcmp(argv[i], "-lp") == 0 || strcmp(argv[i], "--list-periods") == 0) {
-        args->list_periods = 1;
-        if (i + 1 < argc && argv[i+1][0] != '-') { // Varmistetaan ettei seuraava ole uusi lippu
-            if (strcmp(argv[i + 1], "en") == 0) {
-                args->lang_en = 1;
-                i++;
-            } else if (strcmp(argv[i + 1], "fi") == 0) {
-                args->lang_en = 0;
-                i++;
+             printf("\n!!! PARSE_ARGS: LIST_PERIODS ASETETTU !!!\n");
+            args->list_periods = 1;
+            // Katsotaan onko seuraava sana "fi" tai "en"
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                if (strcmp(argv[i+1], "en") == 0) {
+                    args->lang_en = 1;
+                    i++;
+                } else if (strcmp(argv[i+1], "fi") == 0) {
+                    args->lang_en = 0;
+                    i++;
+                }
             }
         }
-        } else if (strcmp(argv[i], "--verbose") == 0) {
+        // --- MUUT VIPU-EHDOT ---
+        else if (strcmp(argv[i], "--verbose") == 0) {
             args->verbose = 1;
         } else if (strcmp(argv[i], "--help") == 0) {
             args->help = 1;
@@ -96,38 +100,17 @@ void parse_args(int argc, char *argv[], Args *args) {
             args->family_mode = 1;
         } else if (strcmp(argv[i], "--count") == 0 && i+1 < argc) {
             args->count = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "--set-last-name") == 0 && i+1 < argc) {
-            strncpy(args->forced_surname, argv[++i], sizeof(args->forced_surname) - 1);
-        } else if (strcmp(argv[i], "--middle") == 0 && i+1 < argc) {
-            args->max_middle_names = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "--output") == 0 && i+1 < argc) {
-            const char *mode = argv[++i];
-            if (strcmp(mode, "csv") == 0) args->output_mode = OUTPUT_CSV;
-            else if (strcmp(mode, "json") == 0) args->output_mode = OUTPUT_JSON;
-        } else if (strcmp(argv[i], "--gender") == 0 && i+1 < argc) {
-            const char *g = argv[++i];
-            if (strcmp(g, "male") == 0 || strcmp(g, "m") == 0) args->gender = MALE;
-            else if (strcmp(g, "female") == 0 || strcmp(g, "f") == 0) args->gender = FEMALE;
         } else if (strcmp(argv[i], "--male") == 0) {
             args->gender = MALE;
         } else if (strcmp(argv[i], "--female") == 0) {
             args->gender = FEMALE;
-        } else if (strcmp(argv[i], "--seed") == 0 && i+1 < argc) {
-            args->seed = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "--format") == 0 && i+1 < argc) {
-            strncpy(args->format, argv[++i], sizeof(args->format) - 1);
-        } else if (strcmp(argv[i], "--stdout") == 0) {
-            args->use_stdout = 1;
-        } else if (strcmp(argv[i], "--shared-surname") == 0) {
-            args->shared_surname = 1;
-        } else if (strcmp(argv[i], "--maiden-name") == 0) {
-            args->maiden_name = 1;
-        } else if (strcmp(argv[i], "--force-manual") == 0) {
-            args->force_manual = 1;
-        } else if (strcmp(argv[i], "--middle-chance") == 0 && i + 1 < argc) {
-            args->middle_chance = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--age") == 0 || strcmp(argv[i], "-A") == 0) {
             args->show_age = 1;
+        } else if (strcmp(argv[i], "--seed") == 0 && i+1 < argc) {
+            args->seed = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--middle-chance") == 0 && i + 1 < argc) {
+            args->middle_chance = atoi(argv[++i]);
         }
+        // Lis‰‰ t‰h‰n muut tarvittavat else ifit samalla kaavalla
     }
 }

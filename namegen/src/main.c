@@ -21,191 +21,91 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
-
+#include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <locale.h>
-#include <string.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-#include "config.h"
-#include "args.h"
 #include "loader.h"
+#include "config.h"
+// #include "args.h"
 #include "generator.h"
 
-void print_ohjesaanto(const void *cfg_ptr, const Args *args) {
-    const Config *cfg = (const Config *)cfg_ptr;
-    if (!cfg || !cfg->firstMDataPaths) return;
-
-    char path[512];
-    strncpy(path, cfg->firstMDataPaths, sizeof(path) - 1);
-    path[sizeof(path) - 1] = '\0'; // Varmistetaan nollapääte
-
-    // Määritellään last_slash tässä!
-    char *last_slash = strrchr(path, '/');
-    if (!last_slash) last_slash = strrchr(path, '\\');
-
-    if (!last_slash) {
-        printf("[!] Polkuvirhe ohjesaantoa etsiessa.\n");
+// --- APUFUNKTIO: Ohjesääntö ---
+void print_historical_list(cJSON *root, const char *lang) {
+    cJSON *seasons = cJSON_GetObjectItem(root, "seasons");
+    if (!cJSON_IsArray(seasons)) {
+        printf("VIRHE: 'seasons'-listaa ei loytynyt JSON-datasta.\n");
         return;
     }
 
-    FILE *f = NULL;
-    const char *target_file = (args->lang_en) ? "GUIDELINES.txt" : "OHJESAANTO.txt";
+    int use_en = (lang && strcmp(lang, "en") == 0);
 
-    // Asetetaan valittu tiedosto polkuun
-    strcpy(last_slash + 1, target_file);
-    f = fopen(path, "r");
+    printf("\n================================================================================\n");
+    printf("   GENESIM - HISTORICAL PERIODS (%s)\n", use_en ? "EN" : "FI");
+    printf("--------------------------------------------------------------------------------\n");
+    printf("%-3s | %-12s | %-45s\n", "ID", use_en ? "YEARS" : "VUODET", use_en ? "DESCRIPTION" : "KUVAUS");
+    printf("--------------------------------------------------------------------------------\n");
 
-    // Fallback: Jos valittua kieltä ei ole, kokeillaan toista
-    if (f == NULL) {
-        const char *alt_file = (args->lang_en) ? "OHJESAANTO.txt" : "GUIDELINES.txt";
-        strcpy(last_slash + 1, alt_file);
-        f = fopen(path, "r");
-        if (f) target_file = alt_file;
+    cJSON *s = NULL;
+    cJSON_ArrayForEach(s, seasons) {
+        int id = cJSON_GetObjectItem(s, "id")->valueint;
+        const char *y = cJSON_GetObjectItem(s, "years")->valuestring;
+        const char *n = cJSON_GetObjectItem(s, use_en ? "note_en" : "note_fi")->valuestring;
+        printf("%-3d | %-12s | %-45s\n", id, y, n);
     }
-
-    if (f == NULL) {
-        printf("\n[!] Error: Documentation not found (%s).\n", target_file);
-        return;
-    }
-
-    printf("\n==================================================\n");
-    printf("           DOCUMENTATION / OHJESAANTO           \n");
-    printf("           Language: %-26s \n", (strstr(target_file, "GUIDE") ? "English" : "Finnish"));
-    printf("==================================================\n");
-
-    char line[256];
-    while (fgets(line, sizeof(line), f)) {
-        char *p = line;
-        while (*p && (unsigned char)*p <= 32) p++;
-        if (*p == '\0' || *p == '#') continue;
-        printf(" %s", p);
-    }
-    printf("\n==================================================\n\n");
-
-    fclose(f);
+    printf("================================================================================\n\n");
 }
 
 int main(int argc, char *argv[]) {
-    // 1. WINDOWS & UTF-8 TUKI
-    // Tämä varmistaa, että skandit (ä, ö) näkyvät oikein komentorivillä
-    #ifdef _WIN32
-    SetConsoleOutputCP(65001);
-    SetConsoleCP(65001);
-    #endif
+    int list_periods = 0;
+    char *locale_pref = "fi"; // Oletuskieli
 
-    setlocale(LC_ALL, "fi_FI.UTF-8");
-
-    Args args;
-    // Alustetaan args oletusarvoilla (estää satunnaiset luvut muistissa)
-    memset(&args, 0, sizeof(Args));
-    args.count = 1; // Oletuksena yksi nimi
-
-    // 2. PARSE ARGS
-    parse_args(argc, argv, &args);
-
-    // Help ja Version tarkistukset
-    if (args.help) {
-        print_help();
-        return 0;
-    }
-    if (args.version) {
-        print_version();
-        return 0;
-    }
-
-    // 3. SEED (SATUNNAISUUS)
-    if (args.seed != 0) {
-        srand((unsigned int)args.seed);
-        if (args.verbose) {
-            fprintf(stderr, "[INFO] Seed set to: %u\n", (unsigned int)args.seed);
+    // 1. Yksinkertainen parseri suoraan mainissa (ei tarvitse args.c:tä)
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--lp") == 0) {
+            list_periods = 1;
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                locale_pref = argv[i+1];
+                i++;
+            }
         }
-    } else {
-        srand((unsigned int)time(NULL));
     }
 
-    // 4. KONFIGURAATION LATAUS
-    // Varmista että tiedosto on olemassa (config.txt tai config.json)
-    Config *cfg = load_config("config.txt");
+    // 2. Ladataan config.conf
+    Config *cfg = load_config("config.conf");
     if (!cfg) {
-        fprintf(stderr, "ERROR: Configuration file 'config.txt' not found.\n");
+        fprintf(stderr, "ERROR: Could not load config.conf\n");
         return 1;
     }
 
-    if (args.list_periods) {
-        print_ohjesaanto(cfg, &args);
-        free_config(cfg);
-        return 0; // Lopetetaan tähän, kuten "ohjesääntö" vaatii
-    }
+    // 3. Toiminta, jos --lp annettiin
+    if (list_periods == 1) {
+        char full_master_path[512];
+        snprintf(full_master_path, sizeof(full_master_path), "data/%s/%s",
+                 cfg->locale, cfg->master_config_path);
 
-    // 5. PERIODI-LOGIIKKA JA VALIDIOINTI
-    if (args.period <= 0) {
-    args.period = (rand() % 7) + 1; // Arvotaan sarake 1-7 väliltä
-    }
-
-    // Tarkistetaan vain, että tiedosto on olemassa (ei kansioita)
-    if (cfg->firstMDataPaths) {
-        FILE *test_f = fopen(cfg->firstMDataPaths, "r");
-        if (test_f == NULL) {
-            printf("\n[HUOMIO] Nimitiedostoa ei loytynyt: %s\n", cfg->firstMDataPaths);
-            return 1; // Kriittinen virhe, jos tiedostoa ei ole
+        cJSON *root = load_master_config(full_master_path);
+        if (root) {
+            print_historical_list(root, locale_pref);
+            cJSON_Delete(root);
         } else {
-            fclose(test_f);
-            if (args.verbose) printf("[INFO] Kaytetaan saraketta (period): %d\n", args.period);
+            printf("ERROR: JSON not found at %s\n", full_master_path);
         }
-    }
 
-    int period_idx = args.period; // Käytetään suoraan numerona, koska koodisi vertaa current_col == target_period
-
-    // 6. DATAN LATAUS
-    NameData *data = load_all_data_with_config(cfg, period_idx, args.verbose);
-    if (!data) {
-        fprintf(stderr, "FATAL: Loading name data failed.\n");
         free_config(cfg);
-        return 1;
+        return 0; // Lopeta tähän
     }
 
-    if (args.verbose) {
-        fprintf(stderr, "[INFO] Data loaded for the era %d\n", args.period);
-        fprintf(stderr, "[INFO] First names (M/F): %d/%d, Last names: %d\n\n",
-                data->m1_count, data->f1_count, data->l_count);
-    }
+    // Normaali generointi alkaa tasta, jos ei lp-lippua
+    printf("Starting name generation for year %d...\n", cfg->year);
 
-    // 7. GENEROINTI
-    // Jos output on JSON, aloitetaan taulukko
-    if (args.output_mode == OUTPUT_JSON) {
-        printf("[\n");
-    }
-
-    for (int i = 0; i < args.count; i++) {
-        if (args.family_mode) {
-            generate_family(&args, cfg, data, stdout);
-        } else if (args.couple_mode) {
-            generate_couple(&args, cfg, data, stdout);
-        } else {
-            generate_single(&args, cfg, data, stdout);
-        }
-
-        // Jos on useampi generointi ja JSON, lisätään pilkku väliin
-        // Huom: Tämä vaatii, että generaattorifunktiot osaavat käsitellä sisäiset pilkut
-        if (args.output_mode == OUTPUT_JSON && i < args.count - 1) {
-            printf(",\n");
-        }
-    }
-
-    // Jos output on JSON, suljetaan taulukko
-    if (args.output_mode == OUTPUT_JSON) {
-        printf("\n]\n");
-    }
-
-    // 8. PUHDISTUS
-    free_all_data(data);
     free_config(cfg);
-
     return 0;
 }

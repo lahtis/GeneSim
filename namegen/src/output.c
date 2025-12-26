@@ -12,7 +12,7 @@ void write_formatted_name_full(FILE *fp, const char *format, const Name *f_ptr, 
     const char *m_str = (m_ptr && m_ptr->first) ? m_ptr->first : "";
 
     if (strcmp(format, "csv") == 0) {
-        fprintf(fp, "%s,%s,%s,%s,%d\n", f_str, s_str, l_str, m_str, birth_year);
+        fprintf(fp, "%s;%s;%s;%s;%d\n", f_str, s_str, l_str, m_str, birth_year);
     }
     else if (strcmp(format, "json") == 0) {
         // Tulostetaan JSON-objekti ilman rivinvaihtoa, jotta generaattori voi lisätä pilkut
@@ -31,14 +31,22 @@ void write_formatted_name_full(FILE *fp, const char *format, const Name *f_ptr, 
     }
 }
 
-void print_name(const char *format, const Name *first, const Name *second, const Name *last, int birth_year, int verbose) {
-    write_formatted_name_full(stdout, format, first, second, last, NULL, birth_year);
+void print_name(const char *format, const Name *first, const Name *second, const Name *last, const Name *maiden, int birth_year, int verbose) {
+    write_formatted_name_full(stdout, format, first, second, last, maiden, birth_year);
     if (verbose) {
         fprintf(stderr, "[DEBUG] Output printed in format: %s\n", format);
     }
 }
 
-void print_file(FILE *fp, const char *format, const Name *first, const Name *second, const Name *last, int birth_year, int verbose) {
-    if (fp == NULL) return;
-    write_formatted_name_full(fp, format, first, second, last, NULL, birth_year);
+void print_file(FILE *fp, const char *format, const Name *first, const Name *second, const Name *last, const Name *maiden, int birth_year, int verbose) {
+    if (fp == NULL) {
+        if (verbose) fprintf(stderr, "[ERROR] Cannot write to file: FILE pointer is NULL\n");
+        return;
+    }
+
+    write_formatted_name_full(fp, format, first, second, last, maiden, birth_year);
+
+    if (verbose) {
+        fprintf(stderr, "[DEBUG] Output written to file in format: %s\n", format);
+    }
 }

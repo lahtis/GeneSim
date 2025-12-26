@@ -1,5 +1,7 @@
 #ifndef ARGS_H
 #define ARGS_H
+#include "cJSON.h"
+struct cJSON;
 
 // Output-mode
 typedef enum {
@@ -18,6 +20,9 @@ typedef enum {
 // Parameter structure
 typedef struct {
     int count;              // how many generations
+    int list_periods;
+    int lang_en; // 1 jos --en, 0 jos oletus (suomi)
+    char *locale_pref;
     int period;             // 0=random, 1–7
     int seed;               // seed <number>
     int gender;             // MALE or FEMALE
@@ -36,15 +41,12 @@ typedef struct {
     char forced_surname[100]; // Tilaa pakotetulle sukunimelle
     int max_middle_names;     // Keskinimien maksimimäärä
     int middle_chance;        // Todennäköisyys (0-100)
-    int list_periods;
-    int lang_en; // 1 jos --en, 0 jos oletus (suomi)
 } Args;
 
 // Functions
-void print_ohjesaanto(const void *cfg_ptr, const Args *args);
+void print_dynamic_ohjesaanto(cJSON *root, Args *args);
 void parse_args(int argc, char *argv[], Args *args);
 void print_help(void);
 void print_version(void);
 
 #endif /* ARGS_H */
-
