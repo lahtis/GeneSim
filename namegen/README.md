@@ -3,6 +3,9 @@ namegen is a command-line based name generator that supports multiple output for
 
 ## Options
 
+- `--ls`<fi, en>`
+ Show historical eras. Use locale fi or en.
+
 - `--period <number>`
 Select the era (1–7, 0=random)
 
@@ -51,14 +54,13 @@ Force output to console even if file is set
 - `--help`
   Show help
 
- - `--verbose`
- Show detailed loading and generation info
-
 - `--version` 
   Shows the program's version number and build date
 
-- `--verbose` 
-  Shows debug information
+- `--verbose`
+ Show detailed loading and generation info
+
+
 
 ### examples
 
