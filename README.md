@@ -22,5 +22,5 @@ The demo was a character creator. Version 1.3.1 is a data engine. You have moved
 <h2>Technical Specifications</h2>
 <li>Language: Pure C.</li>
 <li>Compatibility: Designed to work on both Windows and Linux environments (using #ifdef constructs).</li>
-<li>Version: v1.3.1 (Development stage).</li>
+<li>Version: v2.0.0 (Development stage).</li>
 <li>Data is based on https://www.tuomas.salste.net/suku/kela-etunimet.html#M1 research. There are a lot of ready-made names.</li>
