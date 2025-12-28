@@ -5,7 +5,7 @@
 namegen - A comprehensive lineage and family relationship simulator.
 Developed pure C.
 
-Copyright (C) 2025 Tuomas L‰hteenm‰ki lahtis@gmail.com
+Copyright (C) 2025 Tuomas L√§hteenm√§ki lahtis[@gmail].com
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -37,11 +37,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #include <windows.h>
 #endif
 
-Args args;                  // T‰m‰ kertoo, ett‰ args on m‰‰ritelty main.c:ss‰
+Args args;                  // T√§m√§ kertoo, ett√§ args on m√§√§ritelty main.c:ss√§
 unsigned int actual_seed;   // Sama siemenluvulle
 Config *cfg = NULL;
 
-// --- APUFUNKTIO: Ohjes‰‰ntˆ ---
+// --- APUFUNKTIO: Ohjes√§√§nt√∂ ---
 void print_historical_list(cJSON *root, const char *lang) {
     cJSON *seasons = cJSON_GetObjectItem(root, "seasons");
     if (!cJSON_IsArray(seasons)) {
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     parse_args(argc, argv, &args);
 
     // 6. TARKISTETAAN APUKOMENNOT
-    // 2. DEBUG: Tarkistetaan mit‰ parse_args oikeasti teki
+    // 2. DEBUG: Tarkistetaan mit√§ parse_args oikeasti teki
 
     if (args.help) { print_help(); free_config(cfg); return 0; }
     if (args.version) { print_version(); free_config(cfg); return 0; }
@@ -103,13 +103,13 @@ int main(int argc, char *argv[]) {
     if (cfg->verbose) {
     printf("[DEBUG] Args structure (CLI): verbose = %d\n", args.verbose);
     }
-    sync_args_to_config(&args, cfg); // P‰ivitt‰‰ cfg-rakenteen args-arvoilla
+    sync_args_to_config(&args, cfg); // P√§ivitt√§√§ cfg-rakenteen args-arvoilla
     if (cfg->verbose) {
     printf("[DEBUG] Config structure after synchronization: verbose = %d\n", cfg->verbose);
     }
 
-    // --- SIIRRETTY SEEDIN ASETUS TƒHƒN ---
-    // Jos args.seed on annettu, k‰ytet‰‰n sit‰, muuten kelloa
+    // --- SIIRRETTY SEEDIN ASETUS T√ÑH√ÑN ---
+    // Jos args.seed on annettu, k√§ytet√§√§n sit√§, muuten kelloa
     actual_seed = args.seed ? (unsigned int)args.seed : (unsigned int)time(NULL);
     srand(actual_seed);
 
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
     if (json_raw) {
         cJSON *temp_root = cJSON_Parse(json_raw);
         if (temp_root) {
-            // MUUTOS TƒSSƒ: Muunnetaan int (0/1) merkkijonoksi ("fi"/"en")
+            // MUUTOS T√ÑSS√Ñ: Muunnetaan int (0/1) merkkijonoksi ("fi"/"en")
             print_historical_list(temp_root, args.lang_en ? "en" : "fi");
             cJSON_Delete(temp_root);
         }
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 
     if (!nd) {
         fprintf(stderr, "[FATAL] Failed to load data. Check the data folder.\n");
-        // Jos haluat viel‰ tarkemman syyn fataliin:
+        // Jos haluat viel√§ tarkemman syyn fataliin:
         if (!cfg->locale) fprintf(stderr, "[HINT] Config locale is NULL!\n");
 
         free_config(cfg);
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
 
     FILE *output_fp = stdout;
 
-    // Tarkistetaan onko Config-rakenteessa m‰‰ritelty tiedostopolku
+    // Tarkistetaan onko Config-rakenteessa m√§√§ritelty tiedostopolku
     if (cfg->output_file && strlen(cfg->output_file) > 0) {
         output_fp = fopen(cfg->output_file, "w");
         if (!output_fp) {
@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
             generate_single(&args, cfg, nd, output_fp);
         }
 
-        // Pakotetaan tuloste ulos jokaisen nimen j‰lkeen
+        // Pakotetaan tuloste ulos jokaisen nimen j√§lkeen
         fflush(output_fp);
     }
 
@@ -229,9 +229,10 @@ int main(int argc, char *argv[]) {
     if (output_fp != stdout) fclose(output_fp);
 
     // 15. SIIVOUS
-       free_all_data(nd); // K‰yt‰ t‰t‰ jos sinulla on NameData-vapauttaja
+       free_all_data(nd); // K√§yt√§ t√§t√§ jos sinulla on NameData-vapauttaja
        free_config(cfg);
 
     // printf("[INFO] The program executed successfully.\n");
     return 0;
 }
+
