@@ -1,0 +1,143 @@
+{
+  "project": "GeneSim NameGen v1.3.4",
+  "database_version": "Master-DB 1.0",
+  "description_fi": "Nimet perustuvat 1860-1970 kuolleiden luetteloihin. Edustaa pitkäikäistä väestöä.",
+  "description_en": "Names are based on registries from 1860-1970. Represents long-lived population.",
+  "settings": {
+    "data_locale": "fi-FI",
+    "precise_historical_data": true,
+    "use_regional_bonuses": true,
+    "deterministic_seed": true,
+    "bias_correction": false,
+    "default_year": 1900,
+    "year_interval": 10,
+    "child_max_age": 14
+  },
+  "data_format": {
+    "separator": ";",
+    "pair_separator": ",",
+    "null_value": "-",
+    "columns": ["1860", "1870", "1880", "1890", "1900", "1910", "1920", "1930", "1940", "1950", "1960"],
+    "note": "Name is stored only once per row to optimize memory."
+  },
+  "data_sources": [
+    {
+      "file": "etunimet_miehet.csv",
+      "type": "first_name",
+      "gender": "male",
+      "max_game_year": 7
+    },
+    {
+      "file": "etunimet_naiset.csv",
+      "type": "first_name",
+      "gender": "female",
+      "max_game_year": 7
+    },
+    {
+      "file": "keskinimet_miehet.csv",
+      "type": "middle_name",
+      "gender": "male",
+      "max_game_year": 7
+    },
+    {
+      "file": "keskinimet_naiset.csv",
+      "type": "middle_name",
+      "gender": "female",
+      "max_game_year": 7
+    },
+    {
+      "file": "sukunimet_yleiset_master.csv",
+      "type": "common_surname",
+      "global_weight": 1.0,
+      "max_game_year": 11
+    },
+    {
+      "file": "sukunimet_ruotsalaiset_ja_saatylaiset.csv",
+      "type": "historical_swedish",
+      "global_weight": 0.8,
+      "max_game_year": 11
+    },
+    {
+      "file": "sukunimet_itaiset.csv",
+      "type": "regional_east",
+      "global_weight": 0.5,
+      "max_game_year": 11
+    },
+    {
+      "file": "sukunimet_uudisluonto.csv",
+      "type": "modern_finnish",
+      "global_weight": 1.2,
+      "max_game_year": 11,
+      "min_year": 1900
+    },
+    {
+      "file": "sukunimet_lansisuomi.csv",
+      "type": "regional_west",
+      "global_weight": 0.7,
+      "max_game_year": 11
+    },
+    {
+      "file": "sukunimet_saatylaiset.csv",
+      "type": "elite",
+      "global_weight": 0.2,
+      "max_game_year": 11
+    },
+    {
+      "file": "ammatit_miehet.csv",
+      "type": "occupation",
+      "gender": "male",
+      "category": "adult",
+      "max_game_year": 11
+    },
+    {
+      "file": "ammatit_naiset.csv",
+      "type": "occupation",
+      "gender": "female",
+      "category": "adult",
+      "max_game_year": 11
+    },
+    {
+      "file": "ammatit_lapset_poika.csv",
+      "type": "occupation",
+      "gender": "male",
+      "category": "child",
+      "max_game_year": 11
+    },
+    {
+      "file": "ammatit_lapset_tytto.csv",
+      "type": "occupation",
+      "gender": "female",
+      "category": "child",
+      "max_game_year": 11
+    },
+    {
+      "file": "regions.json",
+      "type": "region_config"
+    },
+    {
+      "file": "social_logic.json",
+      "type": "social_config"
+    }
+  ],
+  "seasons": [
+    {"id": 1, "years": "1860-1869", "note_fi": "Nälkävuodet ja suuri murros", "note_en": "The Great Famine and Era of Transition"},
+    {"id": 2, "years": "1870-1879", "note_fi": "Höyryn ja tervan valtakausi", "note_en": "The Golden Age of Steam and Tar"},
+    {"id": 3, "years": "1880-1889", "note_fi": "Taloudellinen herääminen", "note_en": "Economic Awakening"},
+    {"id": 4, "years": "1890-1899", "note_fi": "Kansallinen nousu (Fennomania)", "note_en": "Rise of National Identity"},
+    {"id": 5, "years": "1900-1909", "note_fi": "Suomalaistamisbuumi", "note_en": "The Fennicization Movement"},
+    {"id": 6, "years": "1910-1919", "note_fi": "Sota ja itsenäistyminen", "note_en": "War and Independence"},
+    {"id": 7, "years": "1920-1929", "note_fi": "Modernisoituva tasavalta", "note_en": "The Modernizing Republic"},
+    {"id": 8, "years": "1930-1939", "note_fi": "Eheytyvä Suomi", "note_en": "Social Consolidation"},
+    {"id": 9, "years": "1940-1949", "note_fi": "Sota-aika ja evakuointi", "note_en": "War Years and Displacement"},
+    {"id": 10, "years": "1950-1959", "note_fi": "Jälleenrakennus", "note_en": "The Era of Reconstruction"},
+    {"id": 11, "years": "1960-1969", "note_fi": "Suuri muutto kaupunkeihin", "note_en": "The Great Migration to Cities"}
+  ],
+  "metadata": {
+    "source": "Post-mortem registry 1860-1970",
+    "note": "Bias correction false: assumes age-at-death distribution roughly 70y.",
+    "last_updated": "2025-12-25",
+    "country": "Finland",
+    "total_periods": 11,
+    "period_info": "1-7 basic, 8-11 special"
+  }
+}

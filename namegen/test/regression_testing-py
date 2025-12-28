@@ -1,0 +1,67 @@
+import os
+import subprocess
+import re
+
+base_dir = os.path.dirname(__file__)
+exe_path = os.path.normpath(os.path.join(base_dir, "..", "bin", "Debug", "namegen.exe"))
+
+if not os.path.exists(exe_path):
+    print(f"❌ VIRHE: Ohjelmaa ei löydy: {exe_path}")
+    exit(1)
+
+def run_test(cmd):
+    print(f"--- Running: {' '.join(cmd)} ---")
+    # capture_output ottaa talteen sekä stdoutin että stderrin
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
+    return result.stdout
+
+def validate_v2_format(output, mode="family"):
+    if not output.strip():
+        print("❌ VIRHE: Tuloste on täysin tyhjä!")
+        return False
+
+    if mode == "single":
+        # Tarkistaa muodon: [s. 1960]
+        pattern = r"\[s\.\s\d{4}\]"
+        if re.search(pattern, output):
+            print("✅ Standardi v2.0.0 (Single) kunnossa.")
+            return True
+        else:
+            print("❌ VIRHE: Single-muoto [s. VUOSI] puuttuu!")
+            return False
+
+    elif mode == "family":
+        patterns = [r"Father:", r"Mother:", r"\+Children:"]
+    elif mode == "couple":
+        patterns = [r"Men:", r"Women:"]
+    else:
+        return True # Muut modet (kuten pelkkä -lp)
+    
+    for p in patterns:
+        if not re.search(p, output):
+            print(f"❌ VIRHE: Standardi v2.0.0 mukainen '{p}' puuttuu!")
+            return False
+            
+    print(f"✅ Standardi v2.0.0 ({mode}) kunnossa.")
+    return True
+
+# Testi-ajot
+test_cases = [
+    [exe_path, "--count", "50", "--single", "--age", "--year", "1960", "--gender", "female"],
+    [exe_path, "--count", "50", "--single", "--age", "--year", "1960", "--gender", "male"],
+    [exe_path, "--count", "25", "--period", "11", "--couple", "--age"],
+    [exe_path, "--count", "1", "--family", "--age", "--maiden-name", "--year", "1960"],
+    [exe_path, "-lp", "fi"]
+]
+
+for case in test_cases:
+    out = run_test(case)
+    # print(out) # Voit ottaa tämän pois kommentista jos haluat nähdä datan
+
+    # Valitaan oikea validointimode argumenttien perusteella
+    if "--family" in case:
+        validate_v2_format(out, "family")
+    elif "--couple" in case:
+        validate_v2_format(out, "couple")
+    elif "--single" in case:
+        validate_v2_format(out, "single")

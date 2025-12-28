@@ -1,0 +1,62 @@
+# Tekniset tiedot: GeneSim NameGen v2.0.0 (NewYear-Edition)
+
+Tämä dokumentti määrittelee **GeneSim NameGen v2.0.0** -version sisäisen arkkitehtuurin, tietokantavaatimukset ja teknisen logiikan.
+
+---
+
+## 1. Data-arkkitehtuuri ja vakiot
+Moottori on rakennettu C-kielellä ja se hyödyntää hajautettua datamallia. Ohjelma lukee logiikkansa ulkoisista CSV- ja JSON-tiedostoista.
+
+### Tiedostopolut (v2.0.0 lokalisointi)
+* `bin/Debug/data/fi-FI/`: Suomenkielisen data-lokalisoinnin juurikansio.
+* `social_logic.json`: Ammattien ja yhteiskuntaluokkien todennäköisyyskartat.
+* `generator.log`: Ohjelman suorituksen lokitiedosto.
+
+---
+
+## 2. Tietokannan skeemavaatimukset (7/11-standardi)
+Parseri käyttää tiukkaa sarakemäärän tarkistusta. Tiedostojen on noudatettava näitä määriä, jotta ne latautuvat oikein.
+
+### Etu- ja keskinimet — 7 saraketta
+* **Muoto:** `Nimi,Paino;P1;P2;P3;P4;P5;P6`
+* **Validointi:** Rivin on sisällettävä tarkalleen 6 puolipistettä.
+
+### Sukunimet ja ammatit — 11 saraketta
+* **Muoto:** `Nimi,Paino;P1;P2;P3;P4;P5;P6;P7;P8;P9;P10`
+* **Validointi:** Rivin on sisällettävä tarkalleen 10 puolipistettä.
+
+---
+
+## 3. Automaatio ja laadunvarmistus (QA) -työkalut
+v2.0.0-moottorin korkean laadun takaamiseksi on kehitetty Python 3 -pohjainen testaus- ja ylläpitosetti. Nämä sovellukset ovat välttämättömiä datan eheyden ja ohjelmiston vakauden varmistamiseksi.
+
+### 3.1 Datan hallinta ja automaattikorjaus (`gs_data_manager.py`)
+Tunnetaan myös nimellä **Validator v2**. Tätä sovellusta käytetään CSV-tietokannan ylläpitoon.
+* **Automaattikorjaus:** Jos rivillä on väärä määrä sarakkeita, työkalu lisää tai poistaa puolipisteitä automaattisesti 7/11-standardin saavuttamiseksi.
+* **Muodon tarkistus:** Etsii puuttuvia painokertoimen erottimia (`,`) ja varmistaa UTF-8-koodauksen.
+* **Käyttö:** Ajettava aina CSV-tiedostojen manuaalisen muokkauksen jälkeen.
+
+### 3.2 Master-integrointitesti (`gs_integrity_check.py`)
+Tämä on virallinen testaussovellus käännetylle C-ohjelmalle.
+* **Täysi integrointitesti:** Käy automaattisesti läpi kaikki 11 historiallista aikakautta mahdollisten logiikkavirheiden tai kaatumisten varalta.
+* **Tulosteen validointi:** Testaa, tuottaako ohjelma oikeaoppista **JSON**, **CSV** ja **Plain Text** -muotoa.
+* **Determinismin tarkistus:** Varmistaa, että `--seed`-parametri lukitsee satunnaisgeneraattorin oikein.
+
+---
+
+## 4. Logiikkamoottorit
+### Jakelumalli (`--weights`)
+* **Painotettu (Oletus):** Valinta perustuu historialliseen esiintyvyyteen ja aikakausikohtaiseen todennäköisyyteen.
+
+### Aikakausilogiikka (`--period`, `--year`)
+* **Aikakaudet 1-11:** Jokainen aikakausi vaihtaa aktiivisen painokerroinsarakkeen tietokannassa ja säätää ammattijakauman `social_logic.json`-tiedostosta.
+
+---
+
+## 5. Kääntämisvaatimukset
+* **Kääntäjä:** GCC (suositeltu).
+* **Riippuvuudet:** **cJSON**-kirjasto (MIT-lisenssi).
+* **Lisenssi:** GPL v3.0 (Ydinmoottori).
+
+---
+*Päivitetty viimeksi: 28.12.2025*

@@ -1,0 +1,128 @@
+{
+  "logic_name": "Siviilisääty, säätylogiikka ja historia",
+  "version": "1.3.4",
+  "data_locale": {
+    "fi-FI": {
+      "country_name": "Suomi",
+      "periods": [
+        {
+          "years": "1860-1922",
+          "social_classes": {
+            "elite": {
+              "keywords": ["Lääkäri", "Pappi", "Maisteri", "Kauppias", "Nimismies", "Eversti", "Tuomari", "Tehtailija"],
+              "middle_name_chance_bonus": 40,
+              "max_middle_names": 3,
+              "avg_middle_names": 2.2
+            },
+            "labor": {
+              "keywords": ["Metsätyömies", "Renki", "Torppari", "Piika", "Laukkuryssä", "Työmies"],
+              "middle_name_chance_bonus": -10,
+              "max_middle_names": 1,
+              "avg_middle_names": 0.3
+            }
+          },
+          "legal_framework": {
+            "church_law": "Kirkkolaki: Pakollinen jäsenyys, ripillepääsy vaaditaan avioliittoon.",
+            "civil_law": "Suuriruhtinaskunnan asetus: Ei siviiliavioliitto-oikeutta.",
+            "is_religious_mandatory": true
+          },
+          "religions": {
+            "Luterilainen": 0.98,
+            "Ortodoksi": 0.02
+          },
+          "marriage_types": {
+            "Kirkollinen vihkiminen": 1.0,
+            "Siviiliavioliitto": 0.0
+          },
+          "status_weights": {
+            "Naimisissa": 0.60,
+            "Naimaton": 0.28,
+            "Leski": 0.11,
+            "Eronnut": 0.01
+          },
+          "family_params": {
+            "avg_children": 6,
+            "base_infant_mortality_rate": 0.22
+          }
+        },
+        {
+          "years": "1923-1970",
+          "social_classes": {
+            "elite": {
+              "keywords": ["Pankinjohtaja", "Insinööri", "Arkkitehti", "Farmaseutti", "Opettaja", "Toimitusjohtaja", "Näyttelijä"],
+              "middle_name_chance_bonus": 20,
+              "max_middle_names": 3,
+              "avg_middle_names": 2.5
+            },
+            "labor": {
+              "keywords": ["Autonkuljettaja", "Postinkantaja", "Tehdastyöläinen", "Viilari", "Siivooja"],
+              "middle_name_chance_bonus": 10,
+              "max_middle_names": 2,
+              "avg_middle_names": 1.2
+            }
+          },
+          "legal_framework": {
+            "church_law": "Kirkkolaki 1923: Jäsenyys vapaaehtoista.",
+            "civil_law": "Uskonnonvapauslaki: Siviilirekisteri ja siviiliavioliitto sallittu.",
+            "is_religious_mandatory": false
+          },
+          "religions": {
+            "Luterilainen": 0.92,
+            "Siviilirekisteri": 0.06,
+            "Ortodoksi": 0.02
+          },
+          "marriage_types": {
+            "Kirkollinen vihkiminen": 0.90,
+            "Siviiliavioliitto": 0.10
+          },
+          "status_weights": {
+            "Naimisissa": 0.55,
+            "Naimaton": 0.30,
+            "Leski": 0.12,
+            "Eronnut": 0.03
+          },
+          "family_params": {
+            "avg_children": 3,
+            "base_infant_mortality_rate": 0.04
+          }
+        }
+      ],
+      "special_events": [
+        {
+          "event_id": "suuret_nalkavuodet",
+          "name_fi": "Suuret nälkävuodet",
+          "years": ["1867", "1868"],
+          "impact_modifiers": {
+            "infant_mortality_rate_override": 0.65,
+            "marriage_probability_multiplier": 0.15,
+            "status_weights_shift": {
+              "Leski": 0.35,
+              "Naimaton": 0.45
+            },
+            "add_temporary_occupations": {
+              "Kerjäläinen": 5.0,
+              "Huutolainen": 3.0,
+              "Laukkuryssä": 1.5,
+              "Ruotiukko": 2.0
+            }
+          },
+          "description_fi": "Sääolosuhteet tuhosivat sadon. Lavantauti leviää. Väestö liikkeellä kerjuulla.",
+          "description_en": "Crop failures and famine. Typhus outbreak. Large numbers of displaced people begging."
+        },
+        {
+          "event_id": "espanjantauti",
+          "name_fi": "Espanjantauti",
+          "years": ["1918", "1919", "1920"],
+          "impact_modifiers": {
+            "infant_mortality_rate_override": 0.15,
+            "status_weights_shift": {
+              "Leski": 0.20
+            }
+          },
+          "description_fi": "Maailmanlaajuinen influenssapandemia koettelee siviiliväestöä.",
+          "description_en": "A global influenza pandemic is straining the civilian population."
+        }
+      ]
+    }
+  }
+}
